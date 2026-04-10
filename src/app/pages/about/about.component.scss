@@ -1,0 +1,111 @@
+/* ═══ WHY CHOOSE US ═══ */
+.why-choose-us {
+
+    /* ═══ VALUES GRID ═══ */
+    .values-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+
+    .value-card {
+        background-color: white;
+        border-radius: var(--radius-lg);
+        padding: 2rem 1.75rem;
+        border: 1px solid var(--border-color);
+        transition: all 0.6s ease-in-out;
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--green);
+            border-radius: 4px 0 0 4px;
+            transform: scaleY(0);
+            transform-origin: bottom;
+            transition: transform 0.3s ease;
+            z-index: 1;
+        }
+
+        .v-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--green-light);
+            color: var(--green);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+            transition: all 0.6s ease-in-out;
+
+            .lucide {
+                width: 24px;
+                height: 24px;
+            }
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 0.6rem;
+            transition: color 0.6s ease-in-out;
+        }
+
+        p {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.65;
+            transition: color 0.6s ease-in-out;
+        }
+
+        &:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-lg);
+            background-color: var(--primary);
+            background-image: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            border-color: transparent;
+
+            &::before {
+                transform: scaleY(1);
+            }
+
+            .v-icon {
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+            }
+
+            h4 {
+                color: white !important;
+            }
+
+            p {
+                color: rgba(255, 255, 255, 0.85) !important;
+            }
+        }
+    }
+
+    /* ═══ Responsive ═══ */
+    @media (max-width: 768px) {
+        .intro-grid {
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+        }
+
+        .values-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .values-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+}

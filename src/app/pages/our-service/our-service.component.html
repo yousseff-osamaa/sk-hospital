@@ -1,0 +1,49 @@
+
+<section class="services-listing section-padding">
+    <div class="container">
+        <div class="services-grid">
+            <div class="service-card glass" *ngFor="let s of services">
+                <div class="card-image">
+                    <img [src]="s.image" alt="service" />
+                </div>
+                <div class="s-info">
+                    <h4>{{s.name}}</h4>
+                    <p>{{s.desc}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta-section section-padding">
+    <div class="container">
+        <div class="cta-glass-box">
+            <div class="cta-content-wrapper">
+                <div class="cta-left">
+                    <div class="cta-badge">
+                        <span class="dot-pulse"></span>
+                        Emergency Support
+                    </div>
+                    <h2>Need specialized medical consultation?</h2>
+                    <p>Our expert board-certified doctors are ready to provide you with the highest level of clinical
+                        excellence. Book your priority visit today.</p>
+                </div>
+                <div class="cta-right">
+                    <div class="cta-actions-vertical">
+                        <button class="btn btn-white btn-lg btn-glow" routerLink="/appointment">
+                            <span>Book Appointment</span>
+                            <i data-lucide="calendar"></i>
+                        </button>
+                        <a class="btn btn-outline-white btn-lg" href="tel:16111">
+                            <span>Call 16111 Now</span>
+                            <i data-lucide="phone"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <!-- Decorative Elements -->
+            <div class="cta-shape shape-1"></div>
+            <div class="cta-shape shape-2"></div>
+        </div>
+    </div>
+</section>

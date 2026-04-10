@@ -1,0 +1,217 @@
+<section class="appointment-section fade-in" style="min-height: 100vh; padding: 10rem 0; background: #f0f4f8;">
+    <div class="container" style="max-width: 900px; margin: 0 auto;">
+
+        <!-- STEP 1: FORM -->
+        <div class="appointment-card glass" *ngIf="bookingState === 'form'"
+            style="padding: 2.5rem; border-radius: 16px;">
+            <div class="form-header text-center" style="margin-bottom: 2rem;">
+                <h2 style="color: var(--primary-dark);">Book Your <span class="highlight">Appointment</span></h2>
+                <p style="color: var(--text-muted);">Select your specialist and provide patient details.</p>
+            </div>
+
+            <!-- Custom Doctor Selection Dropdown -->
+            <div class="doctor-selection mb-4" style="margin-bottom: 2rem; position: relative;">
+                <h3 style="font-size: 1.1rem; color: var(--primary); margin-bottom: 1rem;">1. Select Your Specialist
+                </h3>
+
+                <div class="custom-dropdown" (click)="isDropdownOpen = !isDropdownOpen"
+                    style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; background: white; display: flex; justify-content: space-between; align-items: center; transition: 0.3s;"
+                    [style.border-color]="isDropdownOpen ? 'var(--primary)' : 'var(--border-color)'">
+                    <div>
+                        <span *ngIf="!selectedDoctor" style="color: var(--text-muted); font-weight: 500;">Click to
+                            select a doctor...</span>
+                        <div *ngIf="selectedDoctor" style="display: flex; flex-direction: column;">
+                            <span style="font-weight: 700; color: var(--primary-dark);">{{selectedDoctor.name}}</span>
+                            <span
+                                style="font-size: 0.85rem; color: var(--text-muted);">{{selectedDoctor.specialty}}</span>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-down" [style.transform]="isDropdownOpen ? 'rotate(180deg)' : 'none'"
+                        style="transition: 0.3s; width: 20px;"></i>
+                </div>
+
+                <!-- Dropdown Menu -->
+                <div class="dropdown-menu glass" *ngIf="isDropdownOpen"
+                    style="position: absolute; top: 100%; left: 0; right: 0; z-index: 100; margin-top: 5px; max-height: 300px; overflow-y: auto; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); background: white; padding: 0.5rem;">
+                    <div *ngFor="let doctor of doctors" (click)="selectDoctor(doctor); isDropdownOpen = false"
+                        class="dropdown-item"
+                        style="padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center;"
+                        [style.background]="selectedDoctor?.id === doctor.id ? 'var(--primary-light)' : 'transparent'">
+                        <div>
+                            <span
+                                style="display: block; font-weight: 600; color: var(--primary-dark);">{{doctor.name}}</span>
+                            <span
+                                style="display: block; font-size: 0.8rem; color: var(--text-muted);">{{doctor.specialty}}</span>
+                        </div>
+                        <span class="badge" [class.available]="doctor.available"
+                            style="font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #e0e7ff; color: var(--primary);">
+                            {{doctor.available ? 'Available' : 'Busy'}}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <form (submit)="handleSubmit($event)" class="appointment-form"
+                style="background: #fafafb; padding: 1.5rem; border-radius: 12px; border: 1px solid #eee;">
+                <h3 style="font-size: 1.1rem; color: var(--primary); margin-bottom: 1rem;">2. Patient Details</h3>
+
+                <div *ngIf="!selectedDoctor" class="info-alert"
+                    style="background: #fff9e6; color: #856404; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; border-left: 4px solid #ffc107;">
+                    Please select a doctor from the list above to proceed.
+                </div>
+
+                <div class="form-grid"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-group">
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Full
+                            Name</label>
+                        <input type="text" [(ngModel)]="bookingData.name" name="name" placeholder="Enter patient name"
+                            required class="form-control"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                    </div>
+                    <div class="form-group">
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Phone
+                            Number</label>
+                        <input type="tel" [(ngModel)]="bookingData.phone" name="phone" placeholder="010..." required
+                            class="form-control"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                    </div>
+                </div>
+
+                <div class="form-grid"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-group">
+                        <label
+                            style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Preferred
+                            Date</label>
+                        <input type="date" [(ngModel)]="bookingData.date" name="date" required class="form-control"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                    </div>
+                    <div class="form-group">
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Turn
+                            Info</label>
+                        <div
+                            style="padding: 0.75rem; background: #e0f2fe; border-radius: 6px; color: #0369a1; font-weight: 700; font-size: 0.9rem;">
+                            <span *ngIf="selectedDoctor">Estimated Turn: #{{selectedDoctor.queueLength + 1}}</span>
+                            <span *ngIf="!selectedDoctor" style="font-weight: 400; opacity: 0.7;">Select a doctor to see
+                                turn</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group full-width" style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Reason
+                        for Visit (Optional)</label>
+                    <textarea [(ngModel)]="bookingData.reason" name="reason"
+                        placeholder="Tell us about your symptoms..." class="form-control"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px;"></textarea>
+                </div>
+
+                <div class="form-actions text-right">
+                    <button type="submit" [disabled]="!selectedDoctor" class="btn btn-primary"
+                        style="padding: 0.8rem 2.5rem;" [style.opacity]="selectedDoctor ? 1 : 0.6">Proceed to
+                        Confirmation</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- STEP 2: CONFIRMATION -->
+        <div class="appointment-card glass fade-in" *ngIf="bookingState === 'confirmation'"
+            style="padding: 3rem; border-radius: 16px; text-align: center; max-width: 600px; margin: 0 auto;">
+            <div
+                style="width: 80px; height: 80px; background: #10b981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 1.5rem; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);">
+                <i data-lucide="check" style="width: 40px; height: 40px;"></i>
+            </div>
+            <h2 style="color: var(--primary-dark); margin-bottom: 1rem;">Booking Confirmed</h2>
+            <p style="color: var(--text-main); font-size: 1.1rem; margin-bottom: 2rem;">You are securely booked with
+                <strong>{{selectedDoctor?.name}}</strong>.</p>
+
+            <div
+                style="background: white; border: 1px solid #e0e7ff; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; text-align: left;">
+                <div
+                    style="display: flex; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">
+                    <span style="color: var(--text-muted); font-weight: 600;">Reference No.</span>
+                    <span style="font-weight: 700; color: var(--primary);">{{ref}}</span>
+                </div>
+                <div
+                    style="display: flex; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">
+                    <span style="color: var(--text-muted); font-weight: 600;">Patient Name</span>
+                    <span style="font-weight: 700; color: var(--text-main);">{{bookingData.name}}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted); font-weight: 600;">Queue Position</span>
+                    <span style="font-weight: 700; color: var(--text-main);">#{{queuePosition}}</span>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="btn btn-primary" (click)="bookingState = 'payment'"
+                    style="padding: 1rem 3rem; border-radius: 50px; font-size: 1.05rem; font-weight: 600; background: #00a76f; border: none; box-shadow: 0 8px 20px rgba(0, 167, 111, 0.25);">Proceed to Payment</button>
+            </div>
+        </div>
+
+        <!-- STEP 3: PAYMENT -->
+        <div class="appointment-card glass fade-in" *ngIf="bookingState === 'payment'"
+            style="padding: 2.5rem; border-radius: 16px; max-width: 500px; margin: 0 auto;">
+            <h2 style="color: var(--primary-dark); text-align: center; margin-bottom: 0.5rem;">Payment Gateway</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Complete your transaction
+                securely to finalize the appointment.</p>
+
+            <form (submit)="submitPayment($event)">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Name on
+                        Card</label>
+                    <input type="text" [(ngModel)]="paymentData.cardName" name="cardName" required class="form-control"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Card
+                        Number</label>
+                    <input type="text" [(ngModel)]="paymentData.cardNumber" name="cardNumber"
+                        placeholder="0000 0000 0000 0000" required class="form-control"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                </div>
+                <div class="form-grid"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label
+                            style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Expiry
+                            (MM/YY)</label>
+                        <input type="text" [(ngModel)]="paymentData.expiry" name="expiry" placeholder="12/26" required
+                            class="form-control"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                    </div>
+                    <div class="form-group">
+                        <label
+                            style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">CVV</label>
+                        <input type="text" [(ngModel)]="paymentData.cvv" name="cvv" placeholder="123" required
+                            class="form-control"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary" 
+                        style="padding: 1rem 3.5rem; border-radius: 50px; font-size: 1.05rem; font-weight: 700; background: #00a76f; border: none; box-shadow: 0 8px 20px rgba(0, 167, 111, 0.25);">Pay Now 350 EGP</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- STEP 4: SUCCESS -->
+        <div class="appointment-card glass fade-in" *ngIf="bookingState === 'success'"
+            style="padding: 3rem; border-radius: 16px; text-align: center; max-width: 600px; margin: 0 auto; background: white;">
+            <div
+                style="width: 80px; height: 80px; background: #d1fae5; color: #00734c; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; margin: 0 auto 1.5rem;">
+                <!-- Using a text emoji or lucide icon if available -->
+                🎉
+            </div>
+            <h2 style="color: var(--primary-dark); margin-bottom: 1rem;">Payment Successful!</h2>
+            <p style="color: var(--text-main); font-size: 1.1rem; margin-bottom: 2rem;">Your appointment is fully
+                confirmed and paid.</p>
+            <p style="margin-bottom: 2rem; color: var(--text-muted);">Please save your Reference No:
+                <strong>{{ref}}</strong></p>
+            <button class="btn btn-outline" (click)="resetForm()" style="padding: 0.8rem 2rem;">Book Another
+                Appointment</button>
+        </div>
+
+    </div>
+</section>

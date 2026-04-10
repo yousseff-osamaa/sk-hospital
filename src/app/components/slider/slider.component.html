@@ -1,0 +1,74 @@
+<section class="hero fade-in">
+
+  <!-- Slides -->
+  <div class="hero-slide"
+       *ngFor="let img of heroImages; let i = index"
+       [class.active]="currentHeroIndex === i">
+
+    <img [src]="img" alt="slider image" class="hero-img">
+
+  </div>
+
+  <!-- Overlay -->
+  <div class="hero-overlay"></div>
+
+  <!-- Arrows -->
+  <button class="slider-btn prev" (click)="prevSlide()">
+    <i data-lucide="chevron-left"></i>
+  </button>
+
+  <button class="slider-btn next" (click)="nextSlide()">
+    <i data-lucide="chevron-right"></i>
+  </button>
+
+  <!-- Dots -->
+  <div class="slider-dots">
+    <div class="dot"
+         *ngFor="let img of heroImages; let i = index"
+         [class.active]="currentHeroIndex === i"
+         (click)="goToSlide(i)">
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="container hero-content">
+    <div class="hero-text">
+      <span class="badge">Excellence in Healthcare</span>
+
+      <h1>
+        Quality Care, <br>
+        <span class="highlight">Inspired by Legacy</span>
+      </h1>
+
+      <p>
+        The memorial Souad Kafafi University Hospital provides world-class medical services with state-of-the-art technology and compassionate care.
+      </p>
+
+      <div class="hero-btns">
+        <button class="btn btn-green btn-lg" routerLink="/services">
+          Explore Services
+        </button>
+
+        <button class="btn btn-outline btn-lg" routerLink="/doctors">
+          Meet Our Doctors
+        </button>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="number">24/7</span>
+          <span class="label">Emergency</span>
+        </div>
+        <div class="stat">
+          <span class="number">50+</span>
+          <span class="label">Specialties</span>
+        </div>
+        <div class="stat">
+          <span class="number">100+</span>
+          <span class="label">Expert Doctors</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>

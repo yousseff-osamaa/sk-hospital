@@ -1,0 +1,154 @@
+
+<section class="quick-access">
+    <div class="container grid-cards">
+        <div class="card glass">
+            <div class="icon"><i data-lucide="calendar-check"></i></div>
+            <h3>Easy Appointment</h3>
+            <p>Book your visit online in just a few clicks.</p>
+            <a routerLink="/appointment" class="link">Book Now →</a>
+        </div>
+        <div class="card glass">
+            <div class="icon"><i data-lucide="search"></i></div>
+            <h3>Find a Doctor</h3>
+            <p>Search through our list of expert specialists.</p>
+            <a routerLink="/doctors" class="link">Search →</a>
+        </div>
+        <div class="card glass highlight-card">
+            <div class="icon"><i data-lucide="ambulance"></i></div>
+            <h3>Emergency</h3>
+            <p>Immediate 24/7 care for life-threatening conditions.</p>
+            <a href="tel:16111" class="link white">Call 16111 →</a>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ INTRO — Who We Are (Moved from About) ═══ -->
+<section class="about-intro section-padding">
+    <div class="container">
+        <div class="intro-grid">
+
+            <!-- Text side -->
+            <div class="intro-text">
+                <span class="sub-title">About Us</span>
+                <h2>Leading Healthcare with <span class="highlight">Compassion</span></h2>
+                <p class="lead-text">At Memorial Souad Kafafi University Hospital, we believe that true healing begins
+                    with a deep commitment to the human spirit.</p>
+                <p>For over 15 years, we have been at the forefront of medical excellence in the region. Our approach
+                    integrates the latest scientific breakthroughs with the timeless values of clinical empathy,
+                    ensuring that every patient receives not just treatment, but a pathway to holistic wellness.</p>
+
+                <!-- Mission card -->
+                <div class="mission-card">
+                    <div class="mc-icon"><i data-lucide="target"></i></div>
+                    <div>
+                        <h4>Our Mission</h4>
+                        <p>To deliver patient-centered healthcare of the highest standard — combining cutting-edge
+                            technology, world-class expertise, and a compassionate approach that treats each
+                            individual with dignity and respect.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image side -->
+            <div class="intro-visual">
+                <div class="img-frame">
+                    <img src="/medical-staff.jpg" alt="Our Medical Team" class="staff-img">
+                    <div class="img-badge">
+                        <span class="num">15+</span>
+                        <span class="lbl">Years of Excellence</span>
+                    </div>
+                </div>
+                <!-- Stats row -->
+                <div class="about-stats">
+                    <div class="a-stat">
+                        <span class="a-num">50+</span>
+                        <span class="a-lbl">Specialties</span>
+                    </div>
+                    <div class="a-stat">
+                        <span class="a-num">100+</span>
+                        <span class="a-lbl">Expert Doctors</span>
+                    </div>
+                    <div class="a-stat">
+                        <span class="a-num">24/7</span>
+                        <span class="a-lbl">Emergency Care</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<section class="services section-padding">
+    <div class="container">
+        <div class="section-header">
+            <span class="sub-title">Excellence in Care</span>
+            <h2><span class="highlight">Our Service</span></h2>
+            <p>Dedicated medical expertise across a comprehensive range of clinical specialties.</p>
+        </div>
+
+        <div class="services-grid">
+            <div class="service-card glass" *ngFor="let s of allServices">
+                <div class="s-icon"><i [attr.data-lucide]="s.icon"></i></div>
+                <div class="s-info">
+                    <h4>{{s.name}}</h4>
+                    <p>{{s.desc}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="dr-spotlight section-padding bg-light">
+    <div class="container">
+        <div class="section-header">
+            <span class="sub-title">Our Experts</span>
+            <h2>Meet Our <span class="highlight">Specialists</span></h2>
+        </div>
+        <div class="spotlight-grid">
+            <div class="spotlight-card glass" *ngFor="let dr of spotlightDrs">
+                <div class="dr-img">
+                    <img *ngIf="dr.image" [src]="dr.image" [alt]="dr.name" class="spotlight-dr-image">
+                </div>
+                <div class="dr-info">
+                    <span class="spec">{{dr.spec}}</span>
+                    <h4>{{dr.name}}</h4>
+                    <button class="btn btn-outline btn-sm" routerLink="/appointment">Book Now</button>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <button class="btn btn-primary" routerLink="/doctors">View All Doctors</button>
+        </div>
+    </div>
+</section>
+
+<section class="latest-blog section-padding">
+    <div class="container">
+        <div class="section-header">
+            <span class="sub-title">Health Library</span>
+            <h2>Latest <span class="highlight">Medical News</span></h2>
+        </div>
+        <div class="blog-preview-grid">
+            <div class="blog-preview-card" *ngFor="let post of blogPosts">
+                <div class="p-img" [style.background-image]="post.image"></div>
+                <div class="p-content">
+                    <span class="date">{{post.date}}</span>
+                    <h4>{{post.title}}</h4>
+                    <a routerLink="/news" class="p-link">Read More →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta-banner">
+    <div class="container cta-content">
+        <h2>Your Health is Our Priority</h2>
+        <p>Contact us today for a comprehensive health checkup or specialist consultation.</p>
+        <div class="cta-actions">
+            <button class="btn btn-white" routerLink="/contact">Contact Us</button>
+            <a class="btn btn-outline-white" href="tel:16111">16111 Emergency</a>
+        </div>
+    </div>
+</section>

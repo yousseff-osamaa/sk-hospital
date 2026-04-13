@@ -7,6 +7,7 @@ import { DoctorListComponent } from './pages/doctors/doctors.component';
 import { NewsComponent } from './pages/news/news';
 import { Contact } from './pages/contact/contact';
 import { Admin } from './pages/admin/admin';
+import { VerifyEmailComponent } from './pages/verify-email/verify-email.component';
 
 import { OurServiceComponent } from './pages/our-service/our-service.component';
 
@@ -20,5 +21,6 @@ export const routes: Routes = [
     { path: 'services', component: OurServiceComponent },
     { path: 'contact', component: Contact },
     { path: 'admin', component: Admin },
+    { path: 'verify-email', component: VerifyEmailComponent },
     { path: '**', redirectTo: '' }
 ];

@@ -1,6 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-news',
@@ -64,7 +65,6 @@ import { FormsModule } from '@angular/forms';
     </section>
   `,
   styles: [`
-    /* تنسيق زرار See More الجديد */
     .btn-see-more {
       background: #00a76f;
       color: white;
@@ -86,8 +86,6 @@ import { FormsModule } from '@angular/forms';
     }
     .text-center { text-align: center; }
     .mt-5 { margin-top: 3rem; }
-
-    /* باقي التنسيقات الأصلية بتاعتك */
     .news-grid {
         display: grid; 
         grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
@@ -119,12 +117,16 @@ import { FormsModule } from '@angular/forms';
   `]
 })
 export class NewsComponent implements OnInit, OnDestroy {
+
+  constructor(
+    private http: HttpClient,
+    private cd: ChangeDetectorRef
+  ) {}
+
   selectedPost: any = null;
   currentHeroIndex = 0;
   slideInterval: any;
-  
-  // --- الخاصية الجديدة للتحكم في العدد ---
-  displayCount = 2; 
+  displayCount = 2;
 
   heroImages: string[] = [
     '/minister-visit.png',
@@ -132,40 +134,16 @@ export class NewsComponent implements OnInit, OnDestroy {
     '/dr-zileli-visit.png'
   ];
 
-  newsArticles = [
-    {
-      title: 'وزير التعليم العالي يتفقد مستشفى سعاد كفافي الجامعي',
-      category: 'أخبار المستشفى',
-      date: 'أحدث الأخبار',
-      summary: 'على هامش اجتماع مجلس الجامعات الخاصة، تفقد الدكتور أيمن عاشور وزير التعليم العالي والبحث العلمي مستشفى سعاد كفافي الجامعي، مشيدًا بمستوى الخدمات الطبية.',
-      content: 'على هامش اجتماع مجلس الجامعات الخاصة والذي استضافته جامعة مصر للعلوم والتكنولوجيا، تفقد الدكتور أيمن عاشور، وزير التعليم العالي والبحث العلمي مستشفي سعاد كفافي الجامعي، يرافقه الأستاذ خالد الطوخي رئيس مجلس أمناء جامعة مصر للعلوم والتكنولوجيا، والدكتور نهاد المحبوب القائم بأعمال رئيس الجامعة وعميد كلية الطب البشرى، والدكتور عبدالوهاب عزت أمين مجلس الجامعات الخاصة، والأستاذ محمد غانم رئيس الإدارة المركزية لأمانة المجالس.',
-      image: '/minister-visit.png'
-    },
-    {
-      title: 'جهاز الـ UVA أحدث طرق علاج الأمراض الجلدية',
-      category: 'علاجات حديثة',
-      date: 'متاح الآن',
-      summary: 'ظهر جهاز UVA كخيار حديث لعلاج بعض الأمراض الجلدية المستعصية. يستخدم الجهاز أشعة محددة تساعد على تحسين حالة الجلد بشكل آمن.',
-      content: 'ظهر جهاز UVA كخيار حديث لعلاج بعض الأمراض الجلدية المستعصية. يستخدم الجهاز أشعة محددة تساعد على تحسين حالة الجلد بشكل آمن وتحت إشراف طبي مع تقليل الأعراض الجانبية مقارنةً ببعض الطرق التقليدية.',
-      image: '/uva-device.png'
-    },
-    {
-        title: 'زيارة الخبير العالمي أ.د. محمد الزليلي لمركز جراحة العمود الفقري',
-        category: 'زيارات طبية',
-        date: 'Nov 2026',
-        summary: 'سلامة الحركة تبدأ من عمود فقري مستقيم. يشرفنا تواجد أ.د. محمد الزليلي، رئيس جمعية إسطنبول للعمود الفقري، بمستشفى سعاد كفافي الجامعي.',
-        image: '/dr-zileli-visit.png'
-    },
-    {
-        title: 'مستشفى سعاد كفافي الجامعي تحصل على الاعتماد المؤسسي',
-        category: 'إنجازات',
-        date: 'Mar 2026',
-        summary: 'مستشفى سعاد كفافي الجامعي تحصد الاعتماد المؤسسي من المجلس العربي للاختصاصات الصحية، كأول كلية طب بجامعة خاصة في مصر.',
-        image: '/achievement-arab-council.png'
-    }
-  ];
+  newsArticles: any[] = [];
 
   ngOnInit() {
+    this.http.get<any[]>('http://127.0.0.1:8000/api/news/').subscribe({
+      next: (data) => {
+        this.newsArticles = data;
+        this.cd.detectChanges();
+      },
+      error: (err) => console.error('Error loading news:', err)
+    });
     this.startTimer();
   }
 
@@ -173,12 +151,10 @@ export class NewsComponent implements OnInit, OnDestroy {
     this.stopTimer();
   }
 
-  // --- دالة إظهار باقي الأخبار الجديدة ---
   showAllNews() {
     this.displayCount = this.newsArticles.length;
   }
 
-  // --- Slider Logic ---
   startTimer() {
     this.slideInterval = setInterval(() => {
       this.nextSlide();

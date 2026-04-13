@@ -62,16 +62,18 @@ export class AppointmentComponent implements OnInit {
                 } else {
                     // Inject the custom doctor dynamically if not in original dummy list
                     const customDr: Doctor = {
-                        id: Date.now(),
-                        name: drName,
-                        specialty: 'طبيب بمستشفى سعاد كفافي',
-                        bio: '',
-                        image: '',
-                        schedule: 'متاح بالطلب',
-                        available: true,
-                        nextSlot: 'الآن',
-                        queueLength: Math.floor(Math.random() * 5)
-                    };
+    id: Date.now(),
+    name: drName,
+    specialty: 'طبيب بمستشفى سعاد كفافي',
+    bio: '',
+    image: '',
+    schedule: 'متاح بالطلب',
+    available: true,
+    next_slot: 'الآن',
+    queue_length: 0,
+    nextSlot: 'الآن',
+    queueLength: 0
+};
                     this.doctors.unshift(customDr);
                     this.selectedDoctor = customDr;
                 }
@@ -88,7 +90,7 @@ export class AppointmentComponent implements OnInit {
         if (!this.selectedDoctor) return;
 
         this.ref = 'SKH-' + Math.floor(1000 + Math.random() * 9000).toString();
-        this.queuePosition = this.selectedDoctor.queueLength + 1;
+        this.queuePosition = (this.selectedDoctor?.queueLength ?? 0) + 1;
         this.bookingState = 'confirmation';
         this.reinitIcons();
     }

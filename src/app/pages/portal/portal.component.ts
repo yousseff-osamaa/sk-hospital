@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 declare var lucide: any;
 
@@ -14,6 +15,8 @@ declare var lucide: any;
 })
 export class PatientPortalComponent implements OnInit, AfterViewInit {
 
+    constructor(private authService: AuthService) {}
+
     viewState: 'login' | 'register' | 'activation' | 'dashboard' = 'login';
 
     // ================= AUTH =================
@@ -23,7 +26,7 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
     regPhone: string = '';
     regPassword: string = '';
 
-    loginPhone = '';
+    loginEmail = '';
     loginPassword = '';
 
     currentUser: any = null;
@@ -72,25 +75,23 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
     };
 
     chronicRequests: any[] = [];
-loginSubmitted: any;
-regSubmitted: any;
-isSubmitted: any;
+    loginSubmitted: any;
+    regSubmitted: any;
+    isSubmitted: any;
 
     // =====================================================
 
     ngOnInit() {
         const usr = localStorage.getItem('currentUser');
-
         if (usr) {
             this.currentUser = JSON.parse(usr);
             this.viewState = 'dashboard';
             this.loadPatientData();
         }
 
-        // Load Chronic Requests (per user)
         const allChronic = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
         this.chronicRequests = allChronic.filter((r: any) =>
-            r.patientPhone === this.currentUser?.phone
+            r.patientEmail === this.currentUser?.email
         );
     }
 
@@ -131,75 +132,52 @@ isSubmitted: any;
     goToLogin() { this.viewState = 'login'; }
 
     register() {
-        if (!this.regFirstName || !this.regLastName || !this.regPhone || !this.regPassword) {
-            alert('Fill all fields');
+        if (!this.regFirstName || !this.regLastName || !this.regEmail || !this.regPassword) {
+            alert('Please fill all required fields');
             return;
         }
 
-        let users = JSON.parse(localStorage.getItem('portalUsers') || '[]');
-
-        if (users.find((u: any) => u.phone === this.regPhone)) {
-            alert('User exists');
-            return;
-        }
-
-        const fullName = `${this.regFirstName} ${this.regLastName}`;
-
-        const newUser = {
-            name: fullName,
+        this.authService.register({
             email: this.regEmail,
-            phone: this.regPhone,
             password: this.regPassword,
-            active: false,
-            insuranceIdFile: null,
-            hasInsurance: this.hasInsurance,
-            insuranceCompany: this.selectedInsuranceCompany,
-            insuranceId: this.insuranceId
-        };
-
-        users.push(newUser);
-        localStorage.setItem('portalUsers', JSON.stringify(users));
-
-        this.generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
-        alert('Code: ' + this.generatedCode);
-
-        this.viewState = 'activation';
-    }
-
-    activate() {
-        if (this.actCode === this.generatedCode || this.actCode === '1234') {
-            let users = JSON.parse(localStorage.getItem('portalUsers') || '[]');
-            let usr = users.find((u: any) => u.phone === this.regPhone);
-
-            if (usr) {
-                usr.active = true;
-                localStorage.setItem('portalUsers', JSON.stringify(users));
-                alert('Activated');
+            first_name: this.regFirstName,
+            last_name: this.regLastName,
+        }).subscribe({
+            next: () => {
+                alert('Account created! You can now log in.');
                 this.viewState = 'login';
+            },
+            error: (err) => {
+                const msg = err.error?.email?.[0] || err.error?.detail || 'Registration failed. Please try again.';
+                alert(msg);
             }
-        } else alert('Wrong code');
+        });
     }
 
     login() {
-        let users = JSON.parse(localStorage.getItem('portalUsers') || '[]');
+        if (!this.loginEmail || !this.loginPassword) {
+            alert('Please fill all fields');
+            return;
+        }
 
-        let usr = users.find((u: any) =>
-            u.phone === this.loginPhone && u.password === this.loginPassword
-        );
-
-        if (!usr) return alert('Invalid');
-
-        if (!usr.active) return alert('Not activated');
-
-        this.currentUser = usr;
-        localStorage.setItem('currentUser', JSON.stringify(usr));
-
-        this.viewState = 'dashboard';
-        this.loadPatientData();
+        this.authService.login(this.loginEmail, this.loginPassword).subscribe({
+            next: (tokens) => {
+                const userData = {
+                    name: this.loginEmail,
+                    email: this.loginEmail,
+                    phone: this.loginEmail,
+                };
+                this.authService.saveSession(tokens, userData);
+                this.currentUser = userData;
+                this.viewState = 'dashboard';
+                this.loadPatientData();
+            },
+            error: () => alert('Invalid email or password')
+        });
     }
 
     logout() {
-        localStorage.removeItem('currentUser');
+        this.authService.clearSession();
         this.currentUser = null;
         this.viewState = 'login';
     }
@@ -220,51 +198,51 @@ isSubmitted: any;
     }
 
     // ================= CHRONIC =================
-   // ================= CHRONIC =================
-  onChronicFileSelect(event: any) {
-    // تخزين الملفات المختارة في مصفوفة
-    this.chronic.files = Array.from(event.target.files);
-  }
-
-  submitChronicRequest() {
-    // التحقق من وجود ملفات (صورتين مثلاً)
-    // قمت هنا بالتحقق من مصفوفة الملفات لضمان عدم تركها فارغة
-    if (this.chronic.files.length === 0) {
-      alert("Fill required fields: Please upload the required documents.");
-      return;
+    onChronicFileSelect(event: any) {
+        this.chronic.files = Array.from(event.target.files);
     }
 
-    const newRequest = {
-      id: Date.now(),
-      patientName: this.currentUser.name,
-      patientPhone: this.currentUser.phone,
-      medName: this.chronic.medName || 'Chronic Med', // قيم افتراضية إذا كانت الحقول مخفية
-      condition: this.chronic.condition || 'General',
-      doctor: this.chronic.doctor,
-      duration: this.chronic.duration,
-      files: this.chronic.files.map(f => f.name),
-      status: 'Pending',
-      date: new Date().toLocaleDateString()
-    };
+    submitChronicRequest() {
+        if (this.chronic.files.length === 0) {
+            alert('Please upload the required documents.');
+            return;
+        }
 
-    // حفظ البيانات في LocalStorage
-    const all = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
-    all.push(newRequest);
-    localStorage.setItem('chronicRequests', JSON.stringify(all));
+        const newRequest = {
+            id: Date.now(),
+            patientName: this.currentUser.name,
+            patientEmail: this.currentUser.email,
+            medName: this.chronic.medName || 'Chronic Med',
+            condition: this.chronic.condition || 'General',
+            doctor: this.chronic.doctor,
+            duration: this.chronic.duration,
+            files: this.chronic.files.map(f => f.name),
+            status: 'Pending',
+            date: new Date().toLocaleDateString()
+        };
 
-    // تحديث القائمة المعروضة في الصفحة
-    this.chronicRequests.push(newRequest);
+        const all = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
+        all.push(newRequest);
+        localStorage.setItem('chronicRequests', JSON.stringify(all));
 
-    // تفعيل حالة النجاح لإخفاء الفورم وإظهار الرسالة
-    this.isSubmitted = true;
+        this.chronicRequests.push(newRequest);
+        this.isSubmitted = true;
 
-    // إعادة تعيين النموذج
-    this.chronic = {
-      medName: '',
-      condition: '',
-      doctor: '',
-      duration: '',
-      files: []
-    };
-  }
+        this.chronic = {
+            medName: '',
+            condition: '',
+            doctor: '',
+            duration: '',
+            files: []
+        };
+    }
+
+    activate() {
+        if (this.actCode === this.generatedCode || this.actCode === '1234') {
+            alert('Activated');
+            this.viewState = 'login';
+        } else {
+            alert('Wrong code');
+        }
+    }
 }

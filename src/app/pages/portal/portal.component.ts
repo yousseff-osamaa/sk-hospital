@@ -72,6 +72,9 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
     };
 
     chronicRequests: any[] = [];
+loginSubmitted: any;
+regSubmitted: any;
+isSubmitted: any;
 
     // =====================================================
 
@@ -217,44 +220,51 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
     }
 
     // ================= CHRONIC =================
-    onChronicFileSelect(event: any) {
-        this.chronic.files = Array.from(event.target.files);
+   // ================= CHRONIC =================
+  onChronicFileSelect(event: any) {
+    // تخزين الملفات المختارة في مصفوفة
+    this.chronic.files = Array.from(event.target.files);
+  }
+
+  submitChronicRequest() {
+    // التحقق من وجود ملفات (صورتين مثلاً)
+    // قمت هنا بالتحقق من مصفوفة الملفات لضمان عدم تركها فارغة
+    if (this.chronic.files.length === 0) {
+      alert("Fill required fields: Please upload the required documents.");
+      return;
     }
 
-    submitChronicRequest() {
-        if (!this.chronic.medName || !this.chronic.condition) {
-            alert("Fill required fields");
-            return;
-        }
+    const newRequest = {
+      id: Date.now(),
+      patientName: this.currentUser.name,
+      patientPhone: this.currentUser.phone,
+      medName: this.chronic.medName || 'Chronic Med', // قيم افتراضية إذا كانت الحقول مخفية
+      condition: this.chronic.condition || 'General',
+      doctor: this.chronic.doctor,
+      duration: this.chronic.duration,
+      files: this.chronic.files.map(f => f.name),
+      status: 'Pending',
+      date: new Date().toLocaleDateString()
+    };
 
-        const newRequest = {
-            id: Date.now(),
-            patientName: this.currentUser.name,
-            patientPhone: this.currentUser.phone,
-            medName: this.chronic.medName,
-            condition: this.chronic.condition,
-            doctor: this.chronic.doctor,
-            duration: this.chronic.duration,
-            files: this.chronic.files.map(f => f.name),
-            status: 'Pending',
-            date: new Date().toLocaleDateString()
-        };
+    // حفظ البيانات في LocalStorage
+    const all = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
+    all.push(newRequest);
+    localStorage.setItem('chronicRequests', JSON.stringify(all));
 
-        const all = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
-        all.push(newRequest);
+    // تحديث القائمة المعروضة في الصفحة
+    this.chronicRequests.push(newRequest);
 
-        localStorage.setItem('chronicRequests', JSON.stringify(all));
+    // تفعيل حالة النجاح لإخفاء الفورم وإظهار الرسالة
+    this.isSubmitted = true;
 
-        this.chronicRequests.push(newRequest);
-
-        alert("Request sent!");
-
-        this.chronic = {
-            medName: '',
-            condition: '',
-            doctor: '',
-            duration: '',
-            files: []
-        };
-    }
+    // إعادة تعيين النموذج
+    this.chronic = {
+      medName: '',
+      condition: '',
+      doctor: '',
+      duration: '',
+      files: []
+    };
+  }
 }

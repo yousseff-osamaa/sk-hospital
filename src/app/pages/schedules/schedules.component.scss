@@ -44,7 +44,8 @@
 
 .slide-stage {
   position: relative;
-  min-height: 52vh;
+  height: min(78vh, 900px);
+  min-height: 460px;
   background: #fff;
   border-radius: 20px;
   box-shadow: 0 16px 48px rgba(28, 48, 110, 0.08);
@@ -70,17 +71,18 @@
 }
 
 .slide-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   height: 100%;
-  text-align: center;
 }
 
 .slide-img {
+  width: 100%;
+  height: 100%;
   max-width: 100%;
-  max-height: min(78vh, 900px);
-  width: auto;
-  height: auto;
+  max-height: 100%;
   object-fit: contain;
   vertical-align: middle;
   border-radius: 12px;
@@ -174,6 +176,7 @@
   }
 
   .slide-stage {
-    min-height: 40vh;
+    height: min(62vh, 560px);
+    min-height: 320px;
   }
 }

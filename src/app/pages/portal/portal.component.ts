@@ -26,7 +26,8 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
     regPhone: string = '';
     regPassword: string = '';
 
-    loginEmail = '';
+    loginFirstName = '';
+    loginLastName = '';
     loginPassword = '';
 
     currentUser: any = null;
@@ -131,6 +132,27 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
     goToRegister() { this.viewState = 'register'; }
     goToLogin() { this.viewState = 'login'; }
 
+    private readProfiles(): any[] {
+        return JSON.parse(localStorage.getItem('portalProfiles') || '[]');
+    }
+
+    private upsertProfile(profile: { firstName: string; lastName: string; email: string; phone: string }) {
+        const profiles = this.readProfiles();
+        const first = profile.firstName.trim().toLowerCase();
+        const last = profile.lastName.trim().toLowerCase();
+        const idx = profiles.findIndex(
+            (p: any) =>
+                (p.firstName ?? '').trim().toLowerCase() === first &&
+                (p.lastName ?? '').trim().toLowerCase() === last
+        );
+        if (idx > -1) {
+            profiles[idx] = { ...profiles[idx], ...profile };
+        } else {
+            profiles.push(profile);
+        }
+        localStorage.setItem('portalProfiles', JSON.stringify(profiles));
+    }
+
     register() {
         const first = this.regFirstName?.trim() ?? '';
         const last = this.regLastName?.trim() ?? '';
@@ -151,6 +173,12 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
             phone,
         }).subscribe({
             next: () => {
+                this.upsertProfile({
+                    firstName: first,
+                    lastName: last,
+                    email,
+                    phone
+                });
                 alert('Account created. Check your email to verify your account, then you can log in.');
                 this.viewState = 'login';
             },
@@ -169,24 +197,36 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
     }
 
     login() {
-        if (!this.loginEmail || !this.loginPassword) {
+        const first = this.loginFirstName.trim();
+        const last = this.loginLastName.trim();
+        if (!first || !last || !this.loginPassword) {
             alert('Please fill all fields');
             return;
         }
 
-        this.authService.login(this.loginEmail, this.loginPassword).subscribe({
+        const profile = this.readProfiles().find(
+            (p: any) =>
+                (p.firstName ?? '').trim().toLowerCase() === first.toLowerCase() &&
+                (p.lastName ?? '').trim().toLowerCase() === last.toLowerCase()
+        );
+        if (!profile?.email) {
+            alert('Account not found. Please register first.');
+            return;
+        }
+
+        this.authService.login(profile.email, this.loginPassword).subscribe({
             next: (tokens) => {
                 const userData = {
-                    name: this.loginEmail,
-                    email: this.loginEmail,
-                    phone: this.loginEmail,
+                    name: `${profile.firstName} ${profile.lastName}`.trim(),
+                    email: profile.email,
+                    phone: profile.phone ?? '',
                 };
                 this.authService.saveSession(tokens, userData);
                 this.currentUser = userData;
                 this.viewState = 'dashboard';
                 this.loadPatientData();
             },
-            error: () => alert('Invalid email or password')
+            error: () => alert('Invalid name or password')
         });
     }
 

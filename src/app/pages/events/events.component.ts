@@ -1,6 +1,5 @@
 import { Component, AfterViewInit, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { EventsService } from '../../services/events.service';
 
 declare var lucide: { createIcons: () => void } | undefined;
@@ -19,7 +18,7 @@ export interface HospitalEvent {
 @Component({
   selector: 'app-events',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './events.component.html',
   styleUrls: ['./events.component.scss']
 })

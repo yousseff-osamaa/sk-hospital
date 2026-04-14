@@ -3,7 +3,7 @@
   <!-- Slides -->
   <div class="hero-slide"
        *ngFor="let img of heroImages; let i = index"
-       [class.active]="currentHeroIndex === i">
+       [class.active]="currentHeroIndex() === i">
 
     <img [src]="img" alt="slider image" class="hero-img">
 
@@ -17,7 +17,7 @@
     <i data-lucide="chevron-left"></i>
   </button>
 
-  <button class="slider-btn next" (click)="nextSlide()">
+  <button class="slider-btn next" (click)="onNextClick()">
     <i data-lucide="chevron-right"></i>
   </button>
 
@@ -25,7 +25,7 @@
   <div class="slider-dots">
     <div class="dot"
          *ngFor="let img of heroImages; let i = index"
-         [class.active]="currentHeroIndex === i"
+         [class.active]="currentHeroIndex() === i"
          (click)="goToSlide(i)">
     </div>
   </div>

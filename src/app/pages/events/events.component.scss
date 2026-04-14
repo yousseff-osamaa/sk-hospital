@@ -147,33 +147,3 @@
   box-shadow: 0 15px 25px rgba(0, 167, 111, 0.3);
 }
 
-.events-cta {
-  margin-top: 3.5rem;
-  text-align: center;
-  padding: 2rem;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(0, 167, 111, 0.08), rgba(28, 48, 110, 0.06));
-}
-
-.events-cta p {
-  margin: 0 0 1rem;
-  color: #1c306e;
-  font-weight: 600;
-}
-
-.btn-book-inline {
-  display: inline-block;
-  background: #00a76f;
-  color: #fff;
-  font-weight: 700;
-  padding: 0.85rem 1.75rem;
-  border-radius: 50px;
-  text-decoration: none;
-  transition: background 0.2s ease, transform 0.2s ease;
-  box-shadow: 0 8px 20px rgba(0, 167, 111, 0.25);
-}
-
-.btn-book-inline:hover {
-  background: #008f5d;
-  transform: translateY(-2px);
-}

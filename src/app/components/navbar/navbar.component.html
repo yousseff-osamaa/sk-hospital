@@ -79,21 +79,6 @@
         Book Appointment
       </button>
 
-      <!-- NOT logged in → Login button -->
-      <ng-container *ngIf="!isLoggedIn">
-        <a routerLink="/admin"
-           style="color: white;
-                  opacity: 0.85;
-                  font-size: 0.95rem;
-                  font-weight: 500;
-                  transition: opacity 0.3s;
-                  text-decoration: none;
-                  border-left: 1px solid rgba(255,255,255,0.2);
-                  padding-left: 1.5rem;"
-           onmouseover="this.style.opacity='1'"
-           onmouseout="this.style.opacity='0.85'">Login</a>
-      </ng-container>
-
       <!-- Logged in → Admin name + Logout -->
       <ng-container *ngIf="isLoggedIn">
         <div style="display: flex;

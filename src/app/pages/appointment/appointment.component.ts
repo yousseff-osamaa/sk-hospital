@@ -31,7 +31,8 @@ export class AppointmentComponent implements OnInit {
     isDropdownOpen = false;
 
     bookingData = {
-        name: '',
+        firstName: '',
+        lastName: '',
         phone: '',
         date: '',
         reason: ''
@@ -54,7 +55,10 @@ export class AppointmentComponent implements OnInit {
         const usr = localStorage.getItem('currentUser');
         if (usr) {
             const currentUser = JSON.parse(usr);
-            this.bookingData.name = currentUser.name;
+            const fullName = (currentUser.name ?? '').trim();
+            const parts = fullName.split(/\s+/).filter((p: string) => p.length > 0);
+            this.bookingData.firstName = parts[0] ?? '';
+            this.bookingData.lastName = parts.slice(1).join(' ');
             this.bookingData.phone = currentUser.phone;
         }
 
@@ -96,6 +100,7 @@ export class AppointmentComponent implements OnInit {
     handleSubmit(event: Event) {
         event.preventDefault();
         if (!this.selectedDoctor) return;
+        if (!this.bookingData.firstName.trim() || !this.bookingData.lastName.trim()) return;
 
         this.ref = 'SKH-' + Math.floor(1000 + Math.random() * 9000).toString();
         this.queuePosition = (this.selectedDoctor?.queueLength ?? 0) + 1;
@@ -108,9 +113,10 @@ export class AppointmentComponent implements OnInit {
         if (!this.selectedDoctor) return;
 
         const dateStr = this.bookingData.date || new Date().toISOString().slice(0, 10);
+        const patientName = this.getPatientFullName();
         const payload = {
             doctorName: this.selectedDoctor.name,
-            patientName: this.bookingData.name,
+            patientName,
             patientPhone: this.bookingData.phone,
             date: dateStr,
             id: this.ref,
@@ -132,7 +138,7 @@ export class AppointmentComponent implements OnInit {
             id: this.ref,
             doctorName: this.selectedDoctor?.name,
             specialty: this.selectedDoctor?.specialty,
-            patientName: this.bookingData.name,
+            patientName: this.getPatientFullName(),
             patientPhone: this.bookingData.phone,
             date: this.bookingData.date || new Date().toLocaleDateString(),
             reason: this.bookingData.reason,
@@ -147,9 +153,13 @@ export class AppointmentComponent implements OnInit {
     resetForm() {
         this.bookingState = 'form';
         this.selectedDoctor = null;
-        this.bookingData = { name: '', phone: '', date: '', reason: '' };
+        this.bookingData = { firstName: '', lastName: '', phone: '', date: '', reason: '' };
         this.paymentData = { cardName: '', cardNumber: '', expiry: '', cvv: '' };
         this.reinitIcons();
+    }
+
+    getPatientFullName(): string {
+        return `${this.bookingData.firstName} ${this.bookingData.lastName}`.trim();
     }
 
     private reinitIcons() {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID, signal } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
@@ -19,38 +19,64 @@ export class SliderComponent implements OnInit, OnDestroy {
     '/slider 6.jpeg',
     '/assets/photo.png'
   ];
-  currentHeroIndex = 0;
-  heroInterval: any;
+  /** Signal so autoplay updates the view without Zone.js. */
+  readonly currentHeroIndex = signal(0);
+  heroInterval: ReturnType<typeof setInterval> | null = null;
+  readonly autoPlayMs = 3000;
+  private isBrowser = false;
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
 
   ngOnInit() {
-    if (isPlatformBrowser(this.platformId)) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+    if (this.isBrowser) this.startAutoPlay();
+  }
+
+  startAutoPlay() {
+    this.stopAutoPlay();
+    if (this.heroImages.length <= 1) return;
+    this.heroInterval = setInterval(() => {
+      this.nextSlide();
+    }, this.autoPlayMs);
+  }
+
+  stopAutoPlay() {
+    if (this.heroInterval) {
+      clearInterval(this.heroInterval);
+      this.heroInterval = null;
+    }
+  }
+
+  resetAutoPlay() {
+    if (this.isBrowser) {
       this.startAutoPlay();
     }
   }
 
-  startAutoPlay() {
-    this.heroInterval = setInterval(() => {
-      this.nextSlide();
-    }, 5000);
-  }
-
   nextSlide() {
-    this.currentHeroIndex = (this.currentHeroIndex + 1) % this.heroImages.length;
+    this.currentHeroIndex.update(
+      (i) => (i + 1) % this.heroImages.length
+    );
   }
 
   prevSlide() {
-    this.currentHeroIndex = (this.currentHeroIndex - 1 + this.heroImages.length) % this.heroImages.length;
+    this.currentHeroIndex.update(
+      (i) => (i - 1 + this.heroImages.length) % this.heroImages.length
+    );
+    this.resetAutoPlay();
+  }
+
+  onNextClick() {
+    this.nextSlide();
+    this.resetAutoPlay();
   }
 
   goToSlide(index: number) {
-    this.currentHeroIndex = index;
+    this.currentHeroIndex.set(index);
+    this.resetAutoPlay();
   }
 
   ngOnDestroy() {
-    if (this.heroInterval) {
-      clearInterval(this.heroInterval);
-    }
+    this.stopAutoPlay();
   }
 }

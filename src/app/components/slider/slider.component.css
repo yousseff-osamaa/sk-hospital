@@ -32,6 +32,12 @@
     height: 100%;
     object-fit: cover;
     filter: brightness(0.85);
+    transform: scale(1.05);
+    transition: transform 3s ease;
+}
+
+.hero-slide.active .hero-img {
+    transform: scale(1);
 }
 
 /* ===== OVERLAY ===== */

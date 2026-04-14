@@ -53,8 +53,6 @@
 
             <form (submit)="handleSubmit($event)" class="appointment-form"
                 style="background: #fafafb; padding: 1.5rem; border-radius: 12px; border: 1px solid #eee;">
-                <h3 style="font-size: 1.1rem; color: var(--primary); margin-bottom: 1rem;">2. Patient Details</h3>
-
                 <div *ngIf="!selectedDoctor" class="info-alert"
                     style="background: #fff9e6; color: #856404; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; border-left: 4px solid #ffc107;">
                     Please select a doctor from the list above to proceed.
@@ -63,19 +61,27 @@
                 <div class="form-grid"
                     style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div class="form-group">
-                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Full
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">First
                             Name</label>
-                        <input type="text" [(ngModel)]="bookingData.name" name="name" placeholder="Enter patient name"
+                        <input type="text" [(ngModel)]="bookingData.firstName" name="firstName" placeholder="Enter first name"
                             required class="form-control"
                             style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px;">
                     </div>
                     <div class="form-group">
-                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Phone
-                            Number</label>
-                        <input type="tel" [(ngModel)]="bookingData.phone" name="phone" placeholder="010..." required
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Last
+                            Name</label>
+                        <input type="text" [(ngModel)]="bookingData.lastName" name="lastName" placeholder="Enter last name" required
                             class="form-control"
                             style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px;">
                     </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Phone
+                        Number</label>
+                    <input type="tel" [(ngModel)]="bookingData.phone" name="phone" placeholder="010..." required
+                        class="form-control"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px;">
                 </div>
 
                 <div class="form-grid"
@@ -136,7 +142,7 @@
                 <div
                     style="display: flex; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">
                     <span style="color: var(--text-muted); font-weight: 600;">Patient Name</span>
-                    <span style="font-weight: 700; color: var(--text-main);">{{bookingData.name}}</span>
+                    <span style="font-weight: 700; color: var(--text-main);">{{getPatientFullName()}}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                     <span style="color: var(--text-muted); font-weight: 600;">Queue Position</span>

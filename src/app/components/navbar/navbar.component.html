@@ -1,59 +1,147 @@
+<!-- Side Socials -->
 <div class="side-socials">
-    <a href="https://www.facebook.com/themskuh" target="_blank" class="side-icon facebook" title="Facebook">
-        <img src="assets/facebook.png" alt="Facebook">
-    </a>
-    <a href="https://www.instagram.com/souad_kafafi_hospital" target="_blank" class="side-icon instagram" title="Instagram">
-        <img src="assets/instgram.png" alt="Instagram">
-    </a>
-    <a href="https://www.linkedin.com/company/skuh/" target="_blank" class="side-icon linkedin" title="LinkedIn">
-        <img src="assets/linkedin.png" alt="LinkedIn">
-    </a>
-    <a href="https://x.com/themskuh" target="_blank" class="side-icon x-twitter" title="X (Twitter)">
-        <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 22.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
-    </a>
+  <a href="https://www.facebook.com/themskuh" target="_blank" class="side-icon facebook" title="Facebook">
+    <img src="assets/facebook.png" alt="Facebook">
+  </a>
+  <a href="https://www.instagram.com/souad_kafafi_hospital" target="_blank" class="side-icon instagram" title="Instagram">
+    <img src="assets/instgram.png" alt="Instagram">
+  </a>
+  <a href="https://www.linkedin.com/company/skuh/" target="_blank" class="side-icon linkedin" title="LinkedIn">
+    <img src="assets/linkedin.png" alt="LinkedIn">
+  </a>
+  <a href="https://x.com/themskuh" target="_blank" class="side-icon x-twitter" title="X (Twitter)">
+    <svg viewBox="0 0 24 24">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 22.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+    </svg>
+  </a>
 </div>
+
+<!-- Navbar -->
 <nav class="navbar">
-    <div class="nav-content">
+  <div class="nav-content">
 
-        <!-- Logo -->
-        <div class="logo" routerLink="/">
-            <img src="/assets/logo2.png" alt="Souad Kafafi Hospital" class="logo-img">
+    <!-- Logo -->
+    <div class="logo" routerLink="/">
+      <img src="/assets/logo2.png" alt="Souad Kafafi Hospital" class="logo-img">
+    </div>
+
+    <!-- Nav Links -->
+    <ul class="nav-links" [class.open]="isMenuOpen">
+      <li>
+        <a routerLink="/" routerLinkActive="active"
+           [routerLinkActiveOptions]="{exact: true}"
+           (click)="isMenuOpen=false">Home</a>
+      </li>
+      <li>
+        <a routerLink="/about" routerLinkActive="active"
+           (click)="isMenuOpen=false">About Us</a>
+      </li>
+      <li>
+        <a routerLink="/services" routerLinkActive="active"
+           (click)="isMenuOpen=false">Services</a>
+      </li>
+      <li>
+        <a routerLink="/doctors" routerLinkActive="active"
+           (click)="isMenuOpen=false">Doctors</a>
+      </li>
+      <li>
+        <a routerLink="/schedules" routerLinkActive="active"
+           (click)="isMenuOpen=false">Schedules</a>
+      </li>
+      <li>
+        <a routerLink="/portal" routerLinkActive="active"
+           (click)="isMenuOpen=false">Patient portal</a>
+      </li>
+      <li>
+        <a routerLink="/news" routerLinkActive="active"
+           (click)="isMenuOpen=false">News</a>
+      </li>
+      <li>
+        <a routerLink="/events" routerLinkActive="active"
+           (click)="isMenuOpen=false">Events</a>
+      </li>
+      <li>
+        <a routerLink="/contact" routerLinkActive="active"
+           (click)="isMenuOpen=false">Contact Us</a>
+      </li>
+    </ul>
+
+    <!-- Nav Actions -->
+    <div class="nav-actions" style="display: flex; align-items: center; gap: 1.5rem;">
+
+      <!-- Emergency Call -->
+      <a href="tel:16111" class="btn-emergency">
+        <i data-lucide="phone-call"></i> 16111
+      </a>
+
+      <!-- Book Appointment -->
+      <button class="btn-book" routerLink="/appointment">
+        Book Appointment
+      </button>
+
+      <!-- NOT logged in → Login button -->
+      <ng-container *ngIf="!isLoggedIn">
+        <a routerLink="/admin"
+           style="color: white;
+                  opacity: 0.85;
+                  font-size: 0.95rem;
+                  font-weight: 500;
+                  transition: opacity 0.3s;
+                  text-decoration: none;
+                  border-left: 1px solid rgba(255,255,255,0.2);
+                  padding-left: 1.5rem;"
+           onmouseover="this.style.opacity='1'"
+           onmouseout="this.style.opacity='0.85'">Login</a>
+      </ng-container>
+
+      <!-- Logged in → Admin name + Logout -->
+      <ng-container *ngIf="isLoggedIn">
+        <div style="display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                    border-left: 1px solid rgba(255,255,255,0.2);
+                    padding-left: 1.5rem;">
+
+          <span style="display: flex;
+                       align-items: center;
+                       gap: 6px;
+                       color: white;
+                       font-size: 0.9rem;
+                       font-weight: 600;">
+            <i data-lucide="shield-check"
+               style="width: 1px; height: 16px; color: #4ade80;"></i>
+            {{ currentUser?.first_name || 'Admin' }}
+          </span>
+
+          <button (click)="logout()"
+                  style="background: rgba(255,255,255,0.12);
+                         color: white;
+                         border: 1px solid rgba(255,255,255,0.25);
+                         border-radius: 8px;
+                         padding: 0.4rem 1rem;
+                         font-size: 0.88rem;
+                         font-weight: 500;
+                         cursor: pointer;
+                         display: flex;
+                         align-items: center;
+                         gap: 6px;"
+                  onmouseover="this.style.background='rgba(255,255,255,0.22)'"
+                  onmouseout="this.style.background='rgba(255,255,255,0.12)'">
+            <i data-lucide="log-out" style="width: 14px; height: 14px;"></i>
+            Logout
+          </button>
+
         </div>
-
-        <!-- Links -->
-        <ul class="nav-links" [class.open]="isMenuOpen">
-            <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
-                    (click)="isMenuOpen=false">Home</a></li>
-            <li><a routerLink="/about" routerLinkActive="active" (click)="isMenuOpen=false">About Us</a></li>
-            <li><a routerLink="/services" routerLinkActive="active" (click)="isMenuOpen=false">Services</a></li>
-            <li><a routerLink="/doctors" routerLinkActive="active" (click)="isMenuOpen=false">Doctors</a></li>
-            <li><a routerLink="/schedules" routerLinkActive="active" (click)="isMenuOpen=false">Schedules</a></li>
-            <li><a routerLink="/portal" routerLinkActive="active" (click)="isMenuOpen=false">Patient portal</a></li>
-            <li><a routerLink="/news" routerLinkActive="active" (click)="isMenuOpen=false">News</a></li>
-            <li><a routerLink="/events" routerLinkActive="active" (click)="isMenuOpen=false">Events</a></li>
-            <li><a routerLink="/contact" routerLinkActive="active" (click)="isMenuOpen=false">Contact Us</a></li>
-        </ul>
-        <div class="nav-actions" style="display: flex; align-items: center; gap: 1.5rem;">
-            <a href="tel:16111" class="btn-emergency">
-                <i data-lucide="phone-call"></i> 16111
-            </a>
-            <button class="btn-book" routerLink="/appointment">
-                Book Appointment
-            </button>
-
-
-            
-
-            <!-- Login Link -->
-            <a routerLink="/admin" style="color: white; opacity: 0.85; font-size: 0.95rem; font-weight: 500; transition: opacity 0.3s; text-decoration: none; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 1.5rem;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.85">
-                Login
-            </a>
-        </div>
-
-        <!-- Mobile toggle -->
-        <button class="mobile-menu-btn" (click)="isMenuOpen = !isMenuOpen" aria-label="Toggle menu">
-            <i data-lucide="menu"></i>
-        </button>
+      </ng-container>
 
     </div>
+
+    <!-- Mobile Toggle -->
+    <button class="mobile-menu-btn"
+            (click)="isMenuOpen = !isMenuOpen"
+            aria-label="Toggle menu">
+      <i data-lucide="menu"></i>
+    </button>
+
+  </div>
 </nav>

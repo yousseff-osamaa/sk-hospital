@@ -5,6 +5,7 @@ import { DoctorService, Doctor } from '../../services/doctor.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { EventsService } from '../../services/events.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-admin',
@@ -29,265 +30,272 @@ import { EventsService } from '../../services/events.service';
   `
 })
 export class Admin implements OnInit {
-    patientRequests: any[] = [];
-    contactMessages: any[] = [];
-    patientAppointments: any[] = [];
-    doctors: Doctor[] = [];
-    news: any[] = [];
-    eventsList: any[] = [];
+  patientRequests: any[] = [];
+  contactMessages: any[] = [];
+  patientAppointments: any[] = [];
+  doctors: Doctor[] = [];
+  news: any[] = [];
+  eventsList: any[] = [];
 
-    showDoctorModal = false;
-    currentDoctor: Partial<Doctor> = {};
+  showDoctorModal = false;
+  currentDoctor: Partial<Doctor> = {};
 
-    showAppointmentModal = false;
-    isEditingAppointment = false;
-    currentAppointment: any = {};
+  showAppointmentModal = false;
+  isEditingAppointment = false;
+  currentAppointment: any = {};
 
-    showNewsModal = false;
-    currentNews: any = {};
+  showNewsModal = false;
+  currentNews: any = {};
 
-    showEventModal = false;
-    currentEvent: any = {};
+  showEventModal = false;
+  currentEvent: any = {};
 
-    isAdminLoggedIn = false;
-    loginData = { username: '', password: '' };
-    loginError = '';
+  isAdminLoggedIn = false;
+  loginData = { username: '', password: '' };
+  loginError = '';
 
-    private readonly apiBase = environment.apiUrl;
+  private readonly apiBase = environment.apiUrl;
 
-    constructor(
-        private doctorService: DoctorService,
-        private http: HttpClient,
-        private eventsService: EventsService
-    ) {}
+  constructor(
+    private doctorService: DoctorService,
+    private http: HttpClient,
+    private eventsService: EventsService,
+    private authService: AuthService  // ✅ inject AuthService
+  ) {}
 
-    ngOnInit() {
-        const sessionAuth = sessionStorage.getItem('isAdminLoggedIn');
-        if (sessionAuth === 'true') {
-            this.isAdminLoggedIn = true;
+  ngOnInit() {
+    // ✅ Check sessionStorage for admin session
+    const sessionAuth = sessionStorage.getItem('isAdminLoggedIn');
+    if (sessionAuth === 'true') {
+      this.isAdminLoggedIn = true;
+    }
+    this.loadData();
+  }
+
+  login() {
+    if (this.loginData.username === 'admin' && this.loginData.password === 'admin123') {
+      this.isAdminLoggedIn = true;
+      this.loginError = '';
+      sessionStorage.setItem('isAdminLoggedIn', 'true');
+
+      // ✅ Notify navbar via AuthService
+      this.authService.saveSession(
+        { access: 'admin-token', refresh: 'admin-refresh' },
+        { first_name: 'Admin', username: this.loginData.username }
+      );
+
+    } else {
+      this.loginError = 'Invalid username or password';
+    }
+  }
+
+  logout() {
+    this.isAdminLoggedIn = false;
+    sessionStorage.removeItem('isAdminLoggedIn');
+    this.loginData = { username: '', password: '' };
+
+    // ✅ Notify navbar via AuthService
+    this.authService.clearSession();
+  }
+
+  loadData() {
+    this.patientRequests = JSON.parse(localStorage.getItem('portalRequests') || '[]');
+    this.contactMessages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
+
+    this.http.get<any[]>(`${this.apiBase}/appointments/`).subscribe({
+      next: (data: any[]) => this.patientAppointments = data,
+      error: () => {
+        this.patientAppointments = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
+      }
+    });
+
+    this.doctorService.getDoctorsFromApi().subscribe((doctors: Doctor[]) => {
+      this.doctors = doctors;
+    });
+
+    this.loadNews();
+    this.loadAdminEvents();
+  }
+
+  approve(req: any) {
+    req.status = 'Approved';
+    this.saveRequests();
+  }
+
+  processPayment(req: any) {
+    req.status = 'Completed';
+    this.saveRequests();
+    alert('Payment processed successfully for ' + req.patientName);
+  }
+
+  saveRequests() {
+    localStorage.setItem('portalRequests', JSON.stringify(this.patientRequests));
+  }
+
+  // ================= DOCTORS =================
+  openDoctorModal(doctor?: Doctor) {
+    if (doctor) {
+      this.currentDoctor = { ...doctor };
+    } else {
+      this.currentDoctor = {
+        name: '', specialty: '', bio: '', image: '',
+        schedule: '', available: true,
+        next_slot: 'الآن', queue_length: 0
+      };
+    }
+    this.showDoctorModal = true;
+  }
+
+  saveDoctor() {
+    if (this.currentDoctor.id) {
+      this.doctorService.updateDoctor(this.currentDoctor as Doctor).subscribe({
+        next: () => {
+          this.doctorService.getDoctorsFromApi().subscribe((d: Doctor[]) => this.doctors = d);
+          this.showDoctorModal = false;
+          alert('Doctor updated successfully!');
+        },
+        error: (err: any) => alert('Error: ' + err.error?.error)
+      });
+    } else {
+      this.doctorService.addDoctor(this.currentDoctor as Omit<Doctor, 'id'>).subscribe({
+        next: () => {
+          this.doctorService.getDoctorsFromApi().subscribe((d: Doctor[]) => this.doctors = d);
+          this.showDoctorModal = false;
+          alert('Doctor added successfully!');
+        },
+        error: (err: any) => alert('Error: ' + err.error?.error)
+      });
+    }
+  }
+
+  deleteDoctor(id: number) {
+    if (confirm('Are you sure?')) {
+      this.doctorService.deleteDoctor(id).subscribe({
+        next: () => {
+          this.doctorService.getDoctorsFromApi().subscribe((d: Doctor[]) => this.doctors = d);
+          alert('Doctor deleted!');
+        },
+        error: (err: any) => alert('Error: ' + err.error?.error)
+      });
+    }
+  }
+
+  // ================= APPOINTMENTS =================
+  openAppointmentModal(appointment?: any) {
+    if (appointment) {
+      this.currentAppointment = { ...appointment };
+      this.isEditingAppointment = true;
+    } else {
+      this.currentAppointment = {
+        id: 'SKH-' + Math.floor(Math.random() * 9000 + 1000),
+        patientName: '', doctorName: '', date: '', status: 'Pending'
+      };
+      this.isEditingAppointment = false;
+    }
+    this.showAppointmentModal = true;
+  }
+
+  saveAppointment() {
+    const index = this.patientAppointments.findIndex((a: any) => a.id === this.currentAppointment.id);
+    if (index > -1) {
+      this.patientAppointments[index] = this.currentAppointment;
+    } else {
+      this.patientAppointments.unshift(this.currentAppointment);
+    }
+    localStorage.setItem('patientAppointments', JSON.stringify(this.patientAppointments));
+    this.showAppointmentModal = false;
+  }
+
+  deleteAppointment(id: string) {
+    if (confirm('Are you sure?')) {
+      this.patientAppointments = this.patientAppointments.filter((a: any) => a.id !== id);
+      localStorage.setItem('patientAppointments', JSON.stringify(this.patientAppointments));
+    }
+  }
+
+  // ================= NEWS =================
+  loadNews() {
+    this.http.get<any[]>(`${this.apiBase}/news/`).subscribe({
+      next: (data: any[]) => this.news = data,
+      error: (err) => console.error(err)
+    });
+  }
+
+  openNewsModal(article?: any) {
+    if (article) {
+      this.currentNews = { ...article };
+    } else {
+      this.currentNews = { title: '', category: '', date: '', summary: '', content: '', image: '' };
+    }
+    this.showNewsModal = true;
+  }
+
+  saveNews() {
+    if (this.currentNews.id) {
+      this.http.put(`${this.apiBase}/news/${this.currentNews.id}/update/`, this.currentNews).subscribe({
+        next: () => { this.loadNews(); this.showNewsModal = false; alert('News updated!'); },
+        error: (err: any) => alert('Error: ' + err.error?.error)
+      });
+    } else {
+      this.http.post(`${this.apiBase}/news/create/`, this.currentNews).subscribe({
+        next: () => { this.loadNews(); this.showNewsModal = false; alert('News added!'); },
+        error: (err: any) => alert('Error: ' + err.error?.error)
+      });
+    }
+  }
+
+  deleteNews(id: number) {
+    if (confirm('Are you sure?')) {
+      this.http.delete(`${this.apiBase}/news/${id}/delete/`).subscribe({
+        next: () => { this.loadNews(); alert('News deleted!'); },
+        error: (err: any) => alert('Error: ' + err.error?.error)
+      });
+    }
+  }
+
+  // ================= EVENTS =================
+  loadAdminEvents() {
+    this.eventsService.getEvents().subscribe({
+      next: (data) => (this.eventsList = data),
+      error: () => (this.eventsList = [])
+    });
+  }
+
+  openEventModal(ev?: any) {
+    if (ev) {
+      this.currentEvent = { ...ev };
+    } else {
+      this.currentEvent = {
+        title: '', tag: '', date: '',
+        time: '', location: '', summary: '', image: ''
+      };
+    }
+    this.showEventModal = true;
+  }
+
+  saveEvent() {
+    const editing = this.currentEvent.id != null && this.currentEvent.id !== '';
+    const finish = () => {
+      this.loadAdminEvents();
+      this.showEventModal = false;
+      alert(editing ? 'Event updated!' : 'Event added!');
+    };
+    if (editing) {
+      const id = Number(this.currentEvent.id);
+      this.eventsService.updateEvent(id, this.currentEvent).subscribe({ next: finish });
+    } else {
+      this.eventsService.createEvent(this.currentEvent).subscribe({ next: finish });
+    }
+  }
+
+  deleteEvent(id: number) {
+    if (confirm('Are you sure?')) {
+      this.eventsService.deleteEvent(id).subscribe({
+        next: () => {
+          this.loadAdminEvents();
+          alert('Event deleted!');
         }
-        this.loadData();
+      });
     }
-
-    login() {
-        if (this.loginData.username === 'admin' && this.loginData.password === 'admin123') {
-            this.isAdminLoggedIn = true;
-            this.loginError = '';
-            sessionStorage.setItem('isAdminLoggedIn', 'true');
-        } else {
-            this.loginError = 'Invalid username or password';
-        }
-    }
-
-    logout() {
-        this.isAdminLoggedIn = false;
-        sessionStorage.removeItem('isAdminLoggedIn');
-        this.loginData = { username: '', password: '' };
-    }
-
-    loadData() {
-        this.patientRequests = JSON.parse(localStorage.getItem('portalRequests') || '[]');
-        this.contactMessages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
-
-        this.http.get<any[]>(`${this.apiBase}/appointments/`).subscribe({
-            next: (data: any[]) => this.patientAppointments = data,
-            error: () => {
-                this.patientAppointments = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
-            }
-        });
-
-        this.doctorService.getDoctorsFromApi().subscribe((doctors: Doctor[]) => {
-            this.doctors = doctors;
-        });
-
-        this.loadNews();
-        this.loadAdminEvents();
-    }
-
-    approve(req: any) {
-        req.status = 'Approved';
-        this.saveRequests();
-    }
-
-    processPayment(req: any) {
-        req.status = 'Completed';
-        this.saveRequests();
-        alert('Payment processed successfully for ' + req.patientName);
-    }
-
-    saveRequests() {
-        localStorage.setItem('portalRequests', JSON.stringify(this.patientRequests));
-    }
-
-    // ================= DOCTORS =================
-    openDoctorModal(doctor?: Doctor) {
-        if (doctor) {
-            this.currentDoctor = { ...doctor };
-        } else {
-            this.currentDoctor = {
-                name: '', specialty: '', bio: '', image: '',
-                schedule: '', available: true,
-                next_slot: 'الآن', queue_length: 0
-            };
-        }
-        this.showDoctorModal = true;
-    }
-
-    saveDoctor() {
-        if (this.currentDoctor.id) {
-            this.doctorService.updateDoctor(this.currentDoctor as Doctor).subscribe({
-                next: () => {
-                    this.doctorService.getDoctorsFromApi().subscribe((d: Doctor[]) => this.doctors = d);
-                    this.showDoctorModal = false;
-                    alert('Doctor updated successfully!');
-                },
-                error: (err: any) => alert('Error: ' + err.error?.error)
-            });
-        } else {
-            this.doctorService.addDoctor(this.currentDoctor as Omit<Doctor, 'id'>).subscribe({
-                next: () => {
-                    this.doctorService.getDoctorsFromApi().subscribe((d: Doctor[]) => this.doctors = d);
-                    this.showDoctorModal = false;
-                    alert('Doctor added successfully!');
-                },
-                error: (err: any) => alert('Error: ' + err.error?.error)
-            });
-        }
-    }
-
-    deleteDoctor(id: number) {
-        if (confirm('Are you sure?')) {
-            this.doctorService.deleteDoctor(id).subscribe({
-                next: () => {
-                    this.doctorService.getDoctorsFromApi().subscribe((d: Doctor[]) => this.doctors = d);
-                    alert('Doctor deleted!');
-                },
-                error: (err: any) => alert('Error: ' + err.error?.error)
-            });
-        }
-    }
-
-    // ================= APPOINTMENTS =================
-    openAppointmentModal(appointment?: any) {
-        if (appointment) {
-            this.currentAppointment = { ...appointment };
-            this.isEditingAppointment = true;
-        } else {
-            this.currentAppointment = {
-                id: 'SKH-' + Math.floor(Math.random() * 9000 + 1000),
-                patientName: '', doctorName: '', date: '', status: 'Pending'
-            };
-            this.isEditingAppointment = false;
-        }
-        this.showAppointmentModal = true;
-    }
-
-    saveAppointment() {
-        const index = this.patientAppointments.findIndex((a: any) => a.id === this.currentAppointment.id);
-        if (index > -1) {
-            this.patientAppointments[index] = this.currentAppointment;
-        } else {
-            this.patientAppointments.unshift(this.currentAppointment);
-        }
-        localStorage.setItem('patientAppointments', JSON.stringify(this.patientAppointments));
-        this.showAppointmentModal = false;
-    }
-
-    deleteAppointment(id: string) {
-        if (confirm('Are you sure?')) {
-            this.patientAppointments = this.patientAppointments.filter((a: any) => a.id !== id);
-            localStorage.setItem('patientAppointments', JSON.stringify(this.patientAppointments));
-        }
-    }
-
-    // ================= NEWS =================
-    loadNews() {
-        this.http.get<any[]>(`${this.apiBase}/news/`).subscribe({
-            next: (data: any[]) => this.news = data,
-            error: (err) => console.error(err)
-        });
-    }
-
-    openNewsModal(article?: any) {
-        if (article) {
-            this.currentNews = { ...article };
-        } else {
-            this.currentNews = { title: '', category: '', date: '', summary: '', content: '', image: '' };
-        }
-        this.showNewsModal = true;
-    }
-
-    saveNews() {
-        if (this.currentNews.id) {
-            this.http.put(`${this.apiBase}/news/${this.currentNews.id}/update/`, this.currentNews).subscribe({
-                next: () => { this.loadNews(); this.showNewsModal = false; alert('News updated!'); },
-                error: (err: any) => alert('Error: ' + err.error?.error)
-            });
-        } else {
-            this.http.post(`${this.apiBase}/news/create/`, this.currentNews).subscribe({
-                next: () => { this.loadNews(); this.showNewsModal = false; alert('News added!'); },
-                error: (err: any) => alert('Error: ' + err.error?.error)
-            });
-        }
-    }
-
-    deleteNews(id: number) {
-        if (confirm('Are you sure?')) {
-            this.http.delete(`${this.apiBase}/news/${id}/delete/`).subscribe({
-                next: () => { this.loadNews(); alert('News deleted!'); },
-                error: (err: any) => alert('Error: ' + err.error?.error)
-            });
-        }
-    }
-
-    // ================= EVENTS =================
-    loadAdminEvents() {
-        this.eventsService.getEvents().subscribe({
-            next: (data) => (this.eventsList = data),
-            error: () => (this.eventsList = [])
-        });
-    }
-
-    openEventModal(ev?: any) {
-        if (ev) {
-            this.currentEvent = { ...ev };
-        } else {
-            this.currentEvent = {
-                title: '',
-                tag: '',
-                date: '',
-                time: '',
-                location: '',
-                summary: '',
-                image: ''
-            };
-        }
-        this.showEventModal = true;
-    }
-
-    saveEvent() {
-        const editing = this.currentEvent.id != null && this.currentEvent.id !== '';
-        const finish = () => {
-            this.loadAdminEvents();
-            this.showEventModal = false;
-            alert(editing ? 'Event updated!' : 'Event added!');
-        };
-        if (editing) {
-            const id = Number(this.currentEvent.id);
-            this.eventsService.updateEvent(id, this.currentEvent).subscribe({ next: finish });
-        } else {
-            this.eventsService.createEvent(this.currentEvent).subscribe({ next: finish });
-        }
-    }
-
-    deleteEvent(id: number) {
-        if (confirm('Are you sure?')) {
-            this.eventsService.deleteEvent(id).subscribe({
-                next: () => {
-                    this.loadAdminEvents();
-                    alert('Event deleted!');
-                }
-            });
-        }
-    }
+  }
 }

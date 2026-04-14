@@ -1,0 +1,51 @@
+<section class="schedules-page section-padding" dir="rtl">
+  <div class="container">
+    <header class="schedules-header">
+      <h1>جداول مواعيد العيادات</h1>
+      <p class="lead">
+        تصفّح جداول المواعيد أدناه. للحجز أو الاستفسار يمكنك الاتصال على
+        <a href="tel:16111" class="hotline">16111</a>.
+      </p>
+    </header>
+
+    <div class="schedule-slider">
+      <div class="slide-stage">
+        <div
+          class="slide"
+          *ngFor="let slide of slides; let i = index"
+          [class.active]="currentIndex === i"
+        >
+          <a [href]="slide.src" target="_blank" rel="noopener noreferrer" class="slide-link">
+            <img
+              [src]="slide.src"
+              [attr.alt]="slide.alt + ' (' + (i + 1) + '/' + slides.length + ')'"
+              class="slide-img"
+              loading="lazy"
+            />
+          </a>
+        </div>
+      </div>
+
+      <button type="button" class="nav-btn prev" (click)="prev()" aria-label="الشريحة السابقة">
+        <i data-lucide="chevron-right"></i>
+      </button>
+      <button type="button" class="nav-btn next" (click)="next()" aria-label="الشريحة التالية">
+        <i data-lucide="chevron-left"></i>
+      </button>
+
+      <div class="dots" role="tablist" aria-label="اختيار الشريحة">
+        <button
+          type="button"
+          *ngFor="let slide of slides; let i = index"
+          class="dot"
+          [class.active]="currentIndex === i"
+          (click)="goTo(i)"
+          [attr.aria-label]="'الشريحة ' + (i + 1)"
+          [attr.aria-selected]="currentIndex === i"
+        ></button>
+      </div>
+
+      <p class="slide-hint">اضغط على الصورة لفتحها بحجم كامل في تبويب جديد.</p>
+    </div>
+  </div>
+</section>

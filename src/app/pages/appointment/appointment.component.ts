@@ -2,7 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { switchMap, tap } from 'rxjs/operators';
 import { DoctorService, Doctor } from '../../services/doctor.service';
+import { environment } from '../../../environments/environment';
 
 declare var lucide: any;
 
@@ -41,11 +44,13 @@ export class AppointmentComponent implements OnInit {
         cvv: ''
     };
 
-    constructor(private route: ActivatedRoute, private doctorService: DoctorService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private doctorService: DoctorService,
+        private http: HttpClient
+    ) {}
 
     ngOnInit() {
-        this.doctors = this.doctorService.getDoctors();
-        // Pre-fill if logged in to portal
         const usr = localStorage.getItem('currentUser');
         if (usr) {
             const currentUser = JSON.parse(usr);
@@ -53,30 +58,33 @@ export class AppointmentComponent implements OnInit {
             this.bookingData.phone = currentUser.phone;
         }
 
-        this.route.queryParams.subscribe(params => {
+        this.doctorService.getDoctorsFromApi().pipe(
+            tap((doctors) => {
+                this.doctors = doctors.length ? doctors : this.doctorService.getDoctors();
+            }),
+            switchMap(() => this.route.queryParams)
+        ).subscribe((params) => {
             const drName = params['doctor'];
-            if (drName) {
-                let found = this.doctors.find(d => d.name === drName);
-                if (found) {
-                    this.selectedDoctor = found;
-                } else {
-                    // Inject the custom doctor dynamically if not in original dummy list
-                    const customDr: Doctor = {
-    id: Date.now(),
-    name: drName,
-    specialty: 'طبيب بمستشفى سعاد كفافي',
-    bio: '',
-    image: '',
-    schedule: 'متاح بالطلب',
-    available: true,
-    next_slot: 'الآن',
-    queue_length: 0,
-    nextSlot: 'الآن',
-    queueLength: 0
-};
-                    this.doctors.unshift(customDr);
-                    this.selectedDoctor = customDr;
-                }
+            if (!drName) return;
+            const found = this.doctors.find((d) => d.name === drName);
+            if (found) {
+                this.selectedDoctor = found;
+            } else {
+                const customDr: Doctor = {
+                    id: Date.now(),
+                    name: drName,
+                    specialty: 'طبيب بمستشفى سعاد كفافي',
+                    bio: '',
+                    image: '',
+                    schedule: 'متاح بالطلب',
+                    available: true,
+                    next_slot: 'الآن',
+                    queue_length: 0,
+                    nextSlot: 'الآن',
+                    queueLength: 0
+                };
+                this.doctors.unshift(customDr);
+                this.selectedDoctor = customDr;
             }
         });
     }
@@ -97,8 +105,28 @@ export class AppointmentComponent implements OnInit {
 
     submitPayment(event: Event) {
         event.preventDefault();
-        
-        // Save to local storage for Patient Portal access
+        if (!this.selectedDoctor) return;
+
+        const dateStr = this.bookingData.date || new Date().toISOString().slice(0, 10);
+        const payload = {
+            doctorName: this.selectedDoctor.name,
+            patientName: this.bookingData.name,
+            patientPhone: this.bookingData.phone,
+            date: dateStr,
+            id: this.ref,
+            reason: this.bookingData.reason || ''
+        };
+
+        this.http.post<{ message?: string }>(`${environment.apiUrl}/appointments/create/`, payload).subscribe({
+            next: () => this.afterBookingSaved(),
+            error: () => {
+                this.afterBookingSaved();
+                console.warn('Appointment API unavailable; saved locally only.');
+            }
+        });
+    }
+
+    private afterBookingSaved() {
         const appointments = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
         appointments.push({
             id: this.ref,
@@ -112,8 +140,6 @@ export class AppointmentComponent implements OnInit {
             paymentStatus: 'Paid'
         });
         localStorage.setItem('patientAppointments', JSON.stringify(appointments));
-
-        // Payment success
         this.bookingState = 'success';
         this.reinitIcons();
     }

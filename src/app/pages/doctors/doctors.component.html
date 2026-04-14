@@ -23,30 +23,3 @@
         </div>
     </div>
 </section>
-<div class="container my-5" style="direction: rtl;">
-    <div class="text-center mb-5">
-        <h2 style="color: #1c306e; font-weight: 800; border-bottom: 3px solid #00a76f; display: inline-block; padding-bottom: 10px;">
-            جداول مواعيد العيادات
-        </h2>
-    </div>
-
-    <div class="row">
-        <div class="col-12 mb-5" *ngFor="let table of scheduleTables">
-            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-                <div class="card-header border-0 p-3" style="background: #1c306e; color: white;">
-                    <h5 class="m-0 text-center fw-bold">{{ table.title }}</h5>
-                </div>
-                
-                <div class="card-body p-0" style="overflow-x: auto;">
-                    <div style="padding: 10px;"> 
-                        <a [href]="table.image" target="_blank">
-                            <img [src]="table.image" 
-                                 style="width: 100%; height: auto; display: block; border-radius: 8px; min-width: 500px;" 
-                                 [alt]="table.title">
-                        </a>
-                    </div>
-                </div>
-                </div>
-        </div>
-    </div>
-</div>

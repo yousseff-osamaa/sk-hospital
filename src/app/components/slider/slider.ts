@@ -12,6 +12,8 @@ import { RouterLink } from '@angular/router';
 export class SliderComponent implements OnInit, OnDestroy {
   heroImages = [
     '/hospital-building.jpg',
+    '/assets/slider-promo-uva.png',
+    '/assets/slider-promo-body-checkup.png',
     '/slider 3.jpeg',
     '/slider 4.jpeg',
     '/slider 6.jpeg',

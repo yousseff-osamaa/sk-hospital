@@ -132,23 +132,37 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
     goToLogin() { this.viewState = 'login'; }
 
     register() {
-        if (!this.regFirstName || !this.regLastName || !this.regEmail || !this.regPassword) {
-            alert('Please fill all required fields');
+        const first = this.regFirstName?.trim() ?? '';
+        const last = this.regLastName?.trim() ?? '';
+        const email = this.regEmail?.trim() ?? '';
+        const phone = this.regPhone?.trim() ?? '';
+        const password = this.regPassword ?? '';
+
+        if (!first || !last || !email || !phone || !password) {
+            alert('First name, last name, email, phone number, and password are required.');
             return;
         }
 
         this.authService.register({
-            email: this.regEmail,
-            password: this.regPassword,
-            first_name: this.regFirstName,
-            last_name: this.regLastName,
+            email,
+            password,
+            first_name: first,
+            last_name: last,
+            phone,
         }).subscribe({
             next: () => {
-                alert('Account created! You can now log in.');
+                alert('Account created. Check your email to verify your account, then you can log in.');
                 this.viewState = 'login';
             },
             error: (err) => {
-                const msg = err.error?.email?.[0] || err.error?.detail || 'Registration failed. Please try again.';
+                const e = err.error;
+                const msg =
+                    e?.email?.[0] ||
+                    e?.phone?.[0] ||
+                    e?.password?.[0] ||
+                    e?.detail ||
+                    (typeof e === 'string' ? e : null) ||
+                    'Registration failed. Please try again.';
                 alert(msg);
             }
         });

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-verify-email',
@@ -30,7 +31,13 @@ export class VerifyEmailComponent implements OnInit {
     const uid = this.route.snapshot.queryParams['uid'];
     const token = this.route.snapshot.queryParams['token'];
 
-    this.http.get(`http://127.0.0.1:8000/api/verify-email/?uid=${uid}&token=${token}`)
+    if (!uid || !token) {
+      this.status = 'error';
+      return;
+    }
+
+    const q = new URLSearchParams({ uid, token });
+    this.http.get(`${environment.apiUrl}/verify-email/?${q.toString()}`)
       .subscribe({
         next: () => this.status = 'success',
         error: () => this.status = 'error'

@@ -14,20 +14,13 @@ declare var lucide: any;
 })
 export class DoctorListComponent implements AfterViewInit, OnInit {
     doctors: Doctor[] = [];
-scheduleTables = [
-        { title: 'جدول مواعيد عيادات الجراحة والقلب', image: '/doc1.jpg' },
-        { title: 'جدول مواعيد عيادات العظام والجلدية', image: '/doc2.jpg' },
-        { title: 'جدول مواعيد عيادات الباطنة والأطفال', image: '/doc3.jpg' },
-        { title: 'جدول مواعيد الطوارئ والخدمات العاجلة', image: '/doc4.jpg' },
-        { title: 'جدول مواعيد العيادات التخصصية', image: '/doc5.jpg' },
-         { title: 'جدول مواعيد العيادات التخصصية', image: '/doc6.jpg' },
-          { title: 'جدول مواعيد العيادات التخصصية', image: '/doc7.jpg' }
-    ];
 
     constructor(private doctorService: DoctorService) {}
 
     ngOnInit() {
-        this.doctors = this.doctorService.getDoctors();
+        this.doctorService.getDoctorsFromApi().subscribe((list) => {
+            this.doctors = list.length ? list : this.doctorService.getDoctors();
+        });
     }
 
     ngAfterViewInit() {

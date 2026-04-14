@@ -39,6 +39,9 @@ testem.log
 /typings
 __screenshots__/
 
+# Django API clone (add again when you work on backend: git clone …)
+/SKUH-website-backend/
+
 # System files
 .DS_Store
 Thumbs.db

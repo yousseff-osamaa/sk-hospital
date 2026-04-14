@@ -4,7 +4,9 @@ import { AppointmentComponent } from './pages/appointment/appointment.component'
 import { PatientPortalComponent } from './pages/portal/portal.component';
 import { AboutComponent } from './pages/about/about.component';
 import { DoctorListComponent } from './pages/doctors/doctors.component';
+import { SchedulesComponent } from './pages/schedules/schedules.component';
 import { NewsComponent } from './pages/news/news';
+import { EventsComponent } from './pages/events/events.component';
 import { Contact } from './pages/contact/contact';
 import { Admin } from './pages/admin/admin';
 import { VerifyEmailComponent } from './pages/verify-email/verify-email.component';
@@ -17,7 +19,9 @@ export const routes: Routes = [
     { path: 'portal', component: PatientPortalComponent },
     { path: 'about', component: AboutComponent },
     { path: 'doctors', component: DoctorListComponent },
+    { path: 'schedules', component: SchedulesComponent },
     { path: 'news', component: NewsComponent },
+    { path: 'events', component: EventsComponent },
     { path: 'services', component: OurServiceComponent },
     { path: 'contact', component: Contact },
     { path: 'admin', component: Admin },

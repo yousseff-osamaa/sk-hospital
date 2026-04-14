@@ -2,7 +2,7 @@
         <div class="container" style="max-width: 900px;">
             
         
-            <div class="auth-box glass" *ngIf="viewState === 'login'" style="max-width: 450px; margin: 0 auto; padding: 2.5rem; border-radius: 16px;">
+            <div class="auth-box glass" *ngIf="viewState === 'login'" style="max-width: 620px; margin: 0 auto; padding: 3.2rem; border-radius: 16px;">
                 <h2 style="text-align: center; margin-bottom: 0.5rem; color: var(--primary-dark);">Patient Login</h2>
                 <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Access your medical records and appointments.</p>
                 <div class="form-group" style="margin-bottom: 1rem;">
@@ -45,25 +45,26 @@
             <!-- REGISTER VIEW -->
         <div class="auth-box glass" *ngIf="viewState === 'register'" style="max-width: 450px; margin: 0 auto; padding: 2.5rem; border-radius: 16px;">
         <h2 style="text-align: center; margin-bottom: 0.5rem; color: var(--primary-dark);">Patient Registration</h2>
-        
+
+        <form (ngSubmit)="register()" #registerForm="ngForm">
         <div class="form-group" style="margin-bottom: 1rem;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">First Name</label>
-            <input type="text" [(ngModel)]="regFirstName" class="form-control" placeholder="First Name" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">First Name <span style="color:#c62828">*</span></label>
+            <input type="text" name="regFirstName" [(ngModel)]="regFirstName" required class="form-control" placeholder="First Name" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
         </div>
 
         <div class="form-group" style="margin-bottom: 1rem;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Last Name</label>
-            <input type="text" [(ngModel)]="regLastName" class="form-control" placeholder="Last Name" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Last Name <span style="color:#c62828">*</span></label>
+            <input type="text" name="regLastName" [(ngModel)]="regLastName" required class="form-control" placeholder="Last Name" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
         </div>
 
         <div class="form-group" style="margin-bottom: 1rem;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Email</label>
-            <input type="email" [(ngModel)]="regEmail" class="form-control" placeholder="example@mail.com" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Email <span style="color:#c62828">*</span></label>
+            <input type="email" name="regEmail" [(ngModel)]="regEmail" required class="form-control" placeholder="example@mail.com" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
         </div>
 
         <div class="form-group mt-3" style="margin-bottom: 1rem;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Phone Number</label>
-            <input type="text" [(ngModel)]="regPhone" class="form-control" placeholder="010..." style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Phone Number <span style="color:#c62828">*</span></label>
+            <input type="tel" name="regPhone" [(ngModel)]="regPhone" required class="form-control" placeholder="010..." style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
         </div>
 
         <div style="display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 1rem; border-radius: 12px; margin: 1.5rem 0;">
@@ -72,7 +73,7 @@
                 <small style="color: var(--text-muted);">Do you have a provider?</small>
             </div>
             <label class="switch" style="position: relative; display: inline-block; width: 50px; height: 26px;">
-                <input type="checkbox" [(ngModel)]="hasInsurance" style="opacity: 0; width: 0; height: 0;">
+                <input type="checkbox" name="hasInsurance" [(ngModel)]="hasInsurance" style="opacity: 0; width: 0; height: 0;">
                 <span class="slider" [style.background-color]="hasInsurance ? '#00a76f' : '#ccc'" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 34px;">
                     <span [style.transform]="hasInsurance ? 'translateX(24px)' : 'translateX(0)'" style="position: absolute; content: ''; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; display: inline-block;"></span>
                 </span>
@@ -82,24 +83,24 @@
         <div *ngIf="hasInsurance" class="fade-in" style="padding: 1rem; border: 1px dashed #00a76f; border-radius: 12px; margin-bottom: 1.5rem; background: rgba(0, 167, 111, 0.05);">
             <div class="form-group" style="margin-bottom: 1rem;">
                 <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Insurance Company</label>
-                <select [(ngModel)]="selectedInsuranceCompany" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                <select name="selectedInsuranceCompany" [(ngModel)]="selectedInsuranceCompany" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
                     <option value="" disabled selected>Select Company</option>
                     <option *ngFor="let comp of insuranceCompanies" [value]="comp">{{ comp }}</option>
                 </select>
             </div>
             <div class="form-group">
                 <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Insurance ID / Member No.</label>
-                <input type="text" [(ngModel)]="insuranceId" class="form-control" placeholder="e.g. 987654321" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                <input type="text" name="insuranceId" [(ngModel)]="insuranceId" class="form-control" placeholder="e.g. 987654321" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
             </div>
         </div>
 
         <div class="form-group mt-3" style="margin-bottom: 1.5rem;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Password</label>
-            <input type="password" [(ngModel)]="regPassword" class="form-control" placeholder="****" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Password <span style="color:#c62828">*</span></label>
+            <input type="password" name="regPassword" [(ngModel)]="regPassword" required class="form-control" placeholder="****" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
         </div>
 
     <div style="text-align: center;">
-        <button class="btn btn-primary" (click)="register()" 
+        <button type="submit" class="btn btn-primary"
             style="
                 display: flex; 
                 justify-content: center; 
@@ -116,6 +117,7 @@
             Create Account
         </button>
     </div>
+        </form>
         
         <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem;">
             Already have an account? <a href="javascript:void(0)" (click)="goToLogin()" style="color: var(--primary); font-weight: 600;">Login here</a>

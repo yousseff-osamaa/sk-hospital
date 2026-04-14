@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private base = 'http://127.0.0.1:8000/api';
+  private readonly base = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
@@ -13,6 +14,7 @@ export class AuthService {
     password: string;
     first_name: string;
     last_name: string;
+    phone: string;
   }): Observable<any> {
     return this.http.post(`${this.base}/register/`, data);
   }

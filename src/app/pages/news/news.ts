@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-news',
@@ -137,7 +138,7 @@ export class NewsComponent implements OnInit, OnDestroy {
   newsArticles: any[] = [];
 
   ngOnInit() {
-    this.http.get<any[]>('http://127.0.0.1:8000/api/news/').subscribe({
+    this.http.get<any[]>(`${environment.apiUrl}/news/`).subscribe({
       next: (data) => {
         this.newsArticles = data;
         this.cd.detectChanges();

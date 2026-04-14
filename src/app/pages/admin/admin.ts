@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DoctorService, Doctor } from '../../services/doctor.service';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
+import { EventsService } from '../../services/events.service';
 
 @Component({
   selector: 'app-admin',
@@ -32,6 +34,7 @@ export class Admin implements OnInit {
     patientAppointments: any[] = [];
     doctors: Doctor[] = [];
     news: any[] = [];
+    eventsList: any[] = [];
 
     showDoctorModal = false;
     currentDoctor: Partial<Doctor> = {};
@@ -43,13 +46,20 @@ export class Admin implements OnInit {
     showNewsModal = false;
     currentNews: any = {};
 
+    showEventModal = false;
+    currentEvent: any = {};
+
     isAdminLoggedIn = false;
     loginData = { username: '', password: '' };
     loginError = '';
 
-    private apiBase = 'http://127.0.0.1:8000/api';
+    private readonly apiBase = environment.apiUrl;
 
-    constructor(private doctorService: DoctorService, private http: HttpClient) {}
+    constructor(
+        private doctorService: DoctorService,
+        private http: HttpClient,
+        private eventsService: EventsService
+    ) {}
 
     ngOnInit() {
         const sessionAuth = sessionStorage.getItem('isAdminLoggedIn');
@@ -91,6 +101,7 @@ export class Admin implements OnInit {
         });
 
         this.loadNews();
+        this.loadAdminEvents();
     }
 
     approve(req: any) {
@@ -225,6 +236,57 @@ export class Admin implements OnInit {
             this.http.delete(`${this.apiBase}/news/${id}/delete/`).subscribe({
                 next: () => { this.loadNews(); alert('News deleted!'); },
                 error: (err: any) => alert('Error: ' + err.error?.error)
+            });
+        }
+    }
+
+    // ================= EVENTS =================
+    loadAdminEvents() {
+        this.eventsService.getEvents().subscribe({
+            next: (data) => (this.eventsList = data),
+            error: () => (this.eventsList = [])
+        });
+    }
+
+    openEventModal(ev?: any) {
+        if (ev) {
+            this.currentEvent = { ...ev };
+        } else {
+            this.currentEvent = {
+                title: '',
+                tag: '',
+                date: '',
+                time: '',
+                location: '',
+                summary: '',
+                image: ''
+            };
+        }
+        this.showEventModal = true;
+    }
+
+    saveEvent() {
+        const editing = this.currentEvent.id != null && this.currentEvent.id !== '';
+        const finish = () => {
+            this.loadAdminEvents();
+            this.showEventModal = false;
+            alert(editing ? 'Event updated!' : 'Event added!');
+        };
+        if (editing) {
+            const id = Number(this.currentEvent.id);
+            this.eventsService.updateEvent(id, this.currentEvent).subscribe({ next: finish });
+        } else {
+            this.eventsService.createEvent(this.currentEvent).subscribe({ next: finish });
+        }
+    }
+
+    deleteEvent(id: number) {
+        if (confirm('Are you sure?')) {
+            this.eventsService.deleteEvent(id).subscribe({
+                next: () => {
+                    this.loadAdminEvents();
+                    alert('Event deleted!');
+                }
             });
         }
     }

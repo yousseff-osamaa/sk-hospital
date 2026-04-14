@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnInit } from '@angular/core';
+import { Component, AfterViewInit, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DoctorService, Doctor } from '../../services/doctor.service';
@@ -15,11 +15,14 @@ declare var lucide: any;
 export class DoctorListComponent implements AfterViewInit, OnInit {
     doctors: Doctor[] = [];
 
-    constructor(private doctorService: DoctorService) {}
+    constructor(private doctorService: DoctorService,
+        private cd: ChangeDetectorRef 
+    ) {}
 
     ngOnInit() {
         this.doctorService.getDoctorsFromApi().subscribe((list) => {
             this.doctors = list.length ? list : this.doctorService.getDoctors();
+            this.cd.detectChanges();
         });
     }
 

@@ -181,37 +181,49 @@ export class Admin implements OnInit {
   }
 
   // ================= APPOINTMENTS =================
-  openAppointmentModal(appointment?: any) {
-    if (appointment) {
-      this.currentAppointment = { ...appointment };
-      this.isEditingAppointment = true;
-    } else {
-      this.currentAppointment = {
-        id: 'SKH-' + Math.floor(Math.random() * 9000 + 1000),
-        patientName: '', doctorName: '', date: '', status: 'Pending'
-      };
-      this.isEditingAppointment = false;
-    }
-    this.showAppointmentModal = true;
+// ================= APPOINTMENTS =================
+openAppointmentModal(appointment?: any) {
+  if (appointment) {
+    this.currentAppointment = { ...appointment };
+    this.isEditingAppointment = true;
+  } else {
+    this.currentAppointment = {
+      reference_id: 'SKH-' + Math.floor(Math.random() * 9000 + 1000),
+      patient_name: '',
+      patient_phone: '',
+      doctor: null,
+      appointment_date: '',
+      reason: '',
+      status: 'Pending',
+      payment_status: 'Unpaid'
+    };
+    this.isEditingAppointment = false;
   }
+  this.showAppointmentModal = true;
+}
 
-  saveAppointment() {
-    const index = this.patientAppointments.findIndex((a: any) => a.id === this.currentAppointment.id);
-    if (index > -1) {
-      this.patientAppointments[index] = this.currentAppointment;
-    } else {
-      this.patientAppointments.unshift(this.currentAppointment);
-    }
-    localStorage.setItem('patientAppointments', JSON.stringify(this.patientAppointments));
-    this.showAppointmentModal = false;
+saveAppointment() {
+  if (this.isEditingAppointment && this.currentAppointment.id) {
+    this.http.put(`${this.apiBase}/appointments/${this.currentAppointment.id}/update/`, this.currentAppointment).subscribe({
+      next: () => { this.loadData(); this.showAppointmentModal = false; alert('Appointment updated!'); },
+      error: (err: any) => alert('Error: ' + JSON.stringify(err.error))
+    });
+  } else {
+    this.http.post(`${this.apiBase}/appointments/create/admin/`, this.currentAppointment).subscribe({
+      next: () => { this.loadData(); this.showAppointmentModal = false; alert('Appointment added!'); },
+      error: (err: any) => alert('Error: ' + JSON.stringify(err.error))
+    });
   }
+}
 
-  deleteAppointment(id: string) {
-    if (confirm('Are you sure?')) {
-      this.patientAppointments = this.patientAppointments.filter((a: any) => a.id !== id);
-      localStorage.setItem('patientAppointments', JSON.stringify(this.patientAppointments));
-    }
+deleteAppointment(id: any) {
+  if (confirm('Are you sure?')) {
+    this.http.delete(`${this.apiBase}/appointments/${id}/delete/`).subscribe({
+      next: () => { this.loadData(); alert('Appointment deleted!'); },
+      error: (err: any) => alert('Error: ' + JSON.stringify(err.error))
+    });
   }
+}
 
   // ================= NEWS =================
   loadNews() {

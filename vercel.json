@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://37.27.204.174:8800/api/:path*"
+      "destination": "https://skuh-backend.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",

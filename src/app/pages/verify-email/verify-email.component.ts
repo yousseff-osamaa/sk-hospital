@@ -37,10 +37,15 @@ export class VerifyEmailComponent implements OnInit {
     }
 
     const q = new URLSearchParams({ uid, token });
-    this.http.get(`${environment.apiUrl}/verify-email/?${q.toString()}`)
+    const url = `${environment.apiUrl}/verify-email/?${q.toString()}`;
+
+    this.http.get(url)
       .subscribe({
         next: () => this.status = 'success',
-        error: () => this.status = 'error'
+        error: (err: any) => {
+          console.error('Email verification failed:', err);
+          this.status = 'error';
+        }
       });
   }
 }

@@ -1,8 +1,10 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 declare var lucide: any;
 
@@ -15,20 +17,27 @@ declare var lucide: any;
 })
 export class PatientPortalComponent implements OnInit, AfterViewInit {
 
-    constructor(private authService: AuthService) {}
+    constructor(private authService: AuthService, private router: Router, private zone: NgZone, private http: HttpClient) {}
+
+    private readonly apiBase = environment.apiUrl;
 
     viewState: 'login' | 'register' | 'activation' | 'dashboard' = 'login';
+    loginTab: 'patient' | 'admin' = 'patient';
 
     // ================= AUTH =================
     regFirstName: string = '';
     regLastName: string = '';
-    regEmail: string = '';
+    regEmail: string = ''
     regPhone: string = '';
     regPassword: string = '';
 
-    loginFirstName = '';
-    loginLastName = '';
+    // Single full-name login field
+    loginFullName = '';
     loginPassword = '';
+
+    adminUsername = '';
+    adminPassword = '';
+    adminLoginError = '';
 
     currentUser: any = null;
 
@@ -80,12 +89,26 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
     regSubmitted: any;
     isSubmitted: any;
 
+    // ================= POPUP / TOAST =================
+    toasts: { id: number; msg: string; type: 'success'|'error'|'warning'; icon: string }[] = [];
+    private toastCounter = 0;
+
+    confirmVisible = false;
+    confirmMessage = '';
+    private confirmResolve: ((v: boolean) => void) | null = null;
+
     // =====================================================
 
     ngOnInit() {
         const usr = localStorage.getItem('currentUser');
         if (usr) {
-            this.currentUser = JSON.parse(usr);
+            const parsedUser = JSON.parse(usr);
+            // Admin users have a `username` field — send them straight to /admin
+            if (parsedUser?.username) {
+                this.router.navigate(['/admin']);
+                return;
+            }
+            this.currentUser = parsedUser;
             this.viewState = 'dashboard';
             this.loadPatientData();
         }
@@ -121,7 +144,16 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
 
     setActiveTab(tab: any) {
         this.activeTab = tab;
-        setTimeout(() => { if (lucide) lucide.createIcons(); }, 50);
+        // Smooth scroll to the content area after Angular renders the tab
+        setTimeout(() => {
+            const el = document.getElementById('portal-main');
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                window.scrollTo({ top: 300, behavior: 'smooth' });
+            }
+            if (lucide) lucide.createIcons();
+        }, 60);
     }
 
     ngAfterViewInit() {
@@ -130,7 +162,19 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
 
     // ================= AUTH =================
     goToRegister() { this.viewState = 'register'; }
-    goToLogin() { this.viewState = 'login'; }
+    goToLogin() { this.viewState = 'login'; this.loginTab = 'patient'; }
+
+    loginAdmin() {
+        this.adminLoginError = '';
+        if (this.adminUsername === 'admin' && this.adminPassword === 'admin123') {
+            // Admin state lives ONLY in sessionStorage — never write to localStorage
+            // so the patient portal can't mistake the admin for a logged-in patient
+            sessionStorage.setItem('isAdminLoggedIn', 'true');
+            this.router.navigate(['/admin']);
+        } else {
+            this.adminLoginError = 'Invalid username or password';
+        }
+    }
 
     private readProfiles(): any[] {
         return JSON.parse(localStorage.getItem('portalProfiles') || '[]');
@@ -161,7 +205,7 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
         const password = this.regPassword ?? '';
 
         if (!first || !last || !email || !phone || !password) {
-            alert('First name, last name, email, phone number, and password are required.');
+            this.showToast('First name, last name, email, phone number, and password are required.', 'warning');
             return;
         }
 
@@ -171,6 +215,7 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
             first_name: first,
             last_name: last,
             phone,
+            redirect_url: `${window.location.origin}/verify-email`,
         }).subscribe({
             next: () => {
                 this.upsertProfile({
@@ -179,7 +224,7 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
                     email,
                     phone
                 });
-                alert('Account created. Check your email to verify your account, then you can log in.');
+                this.showToast('Account created! Check your email to verify, then log in.', 'success');
                 this.viewState = 'login';
             },
             error: (err) => {
@@ -191,26 +236,29 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
                     e?.detail ||
                     (typeof e === 'string' ? e : null) ||
                     'Registration failed. Please try again.';
-                alert(msg);
+                this.showToast(msg, 'error');
             }
         });
     }
 
     login() {
-        const first = this.loginFirstName.trim();
-        const last = this.loginLastName.trim();
-        if (!first || !last || !this.loginPassword) {
-            alert('Please fill all fields');
+        // Parse full name: "First Last" split by first space
+        const full = this.loginFullName.trim();
+        if (!full || !this.loginPassword) {
+            this.showToast('Please enter your full name and password.', 'warning');
             return;
         }
+        const spaceIdx = full.indexOf(' ');
+        const first = spaceIdx > -1 ? full.substring(0, spaceIdx).toLowerCase() : full.toLowerCase();
+        const last = spaceIdx > -1 ? full.substring(spaceIdx + 1).trim().toLowerCase() : '';
 
         const profile = this.readProfiles().find(
             (p: any) =>
-                (p.firstName ?? '').trim().toLowerCase() === first.toLowerCase() &&
-                (p.lastName ?? '').trim().toLowerCase() === last.toLowerCase()
+                (p.firstName ?? '').trim().toLowerCase() === first &&
+                (last ? (p.lastName ?? '').trim().toLowerCase() === last : true)
         );
         if (!profile?.email) {
-            alert('Account not found. Please register first.');
+            this.showToast('Account not found. Please register first.', 'error');
             return;
         }
 
@@ -226,7 +274,7 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
                 this.viewState = 'dashboard';
                 this.loadPatientData();
             },
-            error: () => alert('Invalid name or password')
+            error: () => this.showToast('Invalid name or password.', 'error')
         });
     }
 
@@ -234,6 +282,18 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
         this.authService.clearSession();
         this.currentUser = null;
         this.viewState = 'login';
+    }
+
+    cancelAppointment(appt: any) {
+        this.showConfirm('Cancel this appointment?').then(ok => {
+            this.zone.run(() => {
+                if (!ok) return;
+                const all = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
+                localStorage.setItem('patientAppointments', JSON.stringify(all.filter((a: any) => a.id !== appt.id)));
+                this.myAppointments = this.myAppointments.filter((a: any) => a.id !== appt.id);
+                this.showToast('Appointment cancelled.', 'success');
+            });
+        });
     }
 
     // ================= INSURANCE =================
@@ -248,7 +308,7 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
         this.currentUser.insuranceIdFile = this.insuranceFile;
         localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
         this.uploadSuccess = true;
-        alert('Insurance uploaded');
+        this.showToast('Insurance ID uploaded successfully.', 'success');
     }
 
     // ================= CHRONIC =================
@@ -258,45 +318,99 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
 
     submitChronicRequest() {
         if (this.chronic.files.length === 0) {
-            alert('Please upload the required documents.');
+            this.showToast('Please upload the required documents.', 'warning');
+            return;
+        }
+        if (!this.currentUser?.email) {
+            this.showToast('Please log in first.', 'error');
             return;
         }
 
-        const newRequest = {
-            id: Date.now(),
-            patientName: this.currentUser.name,
-            patientEmail: this.currentUser.email,
-            medName: this.chronic.medName || 'Chronic Med',
-            condition: this.chronic.condition || 'General',
-            doctor: this.chronic.doctor,
-            duration: this.chronic.duration,
-            files: this.chronic.files.map(f => f.name),
-            status: 'Pending',
-            date: new Date().toLocaleDateString()
-        };
+        const form = new FormData();
+        form.append('patient_name',  this.currentUser.name  ?? '');
+        form.append('patient_email', this.currentUser.email ?? '');
+        form.append('patient_phone', this.currentUser.phone ?? '');
+        form.append('med_name',      this.chronic.medName   ?? '');
+        form.append('condition',     this.chronic.condition ?? '');
+        form.append('doctor',        this.chronic.doctor    ?? '');
+        form.append('duration',      this.chronic.duration  ?? '');
 
-        const all = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
-        all.push(newRequest);
-        localStorage.setItem('chronicRequests', JSON.stringify(all));
+        this.chronic.files.forEach((f: File) => form.append('files', f, f.name));
 
-        this.chronicRequests.push(newRequest);
-        this.isSubmitted = true;
-
-        this.chronic = {
-            medName: '',
-            condition: '',
-            doctor: '',
-            duration: '',
-            files: []
-        };
+        // Try backend first; fall back to localStorage on network error
+        this.http.post(`${this.apiBase}/chronic/submit/`, form).subscribe({
+            next: (saved: any) => {
+                // Refresh local list from backend response
+                const all = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
+                all.push(saved);
+                localStorage.setItem('chronicRequests', JSON.stringify(all));
+                this.chronicRequests.push(saved);
+                this.isSubmitted = true;
+                this.chronic = { medName: '', condition: '', doctor: '', duration: '', files: [] };
+            },
+            error: () => {
+                // Offline fallback: store names only
+                const newRequest = {
+                    id: Date.now(),
+                    patientName: this.currentUser.name,
+                    patientEmail: this.currentUser.email,
+                    medName: this.chronic.medName || 'Chronic Med',
+                    condition: this.chronic.condition || 'General',
+                    doctor: this.chronic.doctor,
+                    duration: this.chronic.duration,
+                    files: this.chronic.files.map((f: File) => f.name),
+                    status: 'Pending',
+                    date: new Date().toLocaleDateString()
+                };
+                const all = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
+                all.push(newRequest);
+                localStorage.setItem('chronicRequests', JSON.stringify(all));
+                this.chronicRequests.push(newRequest);
+                this.isSubmitted = true;
+                this.chronic = { medName: '', condition: '', doctor: '', duration: '', files: [] };
+            }
+        });
     }
 
     activate() {
         if (this.actCode === this.generatedCode || this.actCode === '1234') {
-            alert('Activated');
+            this.showToast('Account activated! You can now log in.', 'success');
             this.viewState = 'login';
         } else {
-            alert('Wrong code');
+            this.showToast('Wrong activation code. Please try again.', 'error');
         }
+    }
+
+    // ================= TOAST SYSTEM =================
+    showToast(msg: string, type: 'success'|'error'|'warning' = 'success') {
+        const id = ++this.toastCounter;
+        const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : '!';
+        this.toasts.push({ id, msg, type, icon });
+        setTimeout(() => this.dismissToast(id), 4500);
+    }
+
+    dismissToast(id: number) {
+        this.toasts = this.toasts.filter(t => t.id !== id);
+    }
+
+    // ================= CONFIRM DIALOG =================
+    showConfirm(message: string): Promise<boolean> {
+        this.confirmMessage = message;
+        this.confirmVisible = true;
+        return new Promise(resolve => {
+            this.confirmResolve = resolve;
+        });
+    }
+
+    onConfirmYes() {
+        this.confirmVisible = false;
+        this.confirmResolve?.(true);
+        this.confirmResolve = null;
+    }
+
+    onConfirmNo() {
+        this.confirmVisible = false;
+        this.confirmResolve?.(false);
+        this.confirmResolve = null;
     }
 }

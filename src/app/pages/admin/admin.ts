@@ -1,11 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { DoctorService, Doctor } from '../../services/doctor.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { EventsService } from '../../services/events.service';
-import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-admin',
@@ -22,11 +22,48 @@ import { AuthService } from '../../services/auth.service';
     .btn-edit { background: #eab308; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; transition: 0.2s;}
     .btn-edit:hover { background: #ca8a04; }
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: white; padding: 2rem; border-radius: 12px; width: 500px; max-width: 90%; max-height: 90vh; overflow-y: auto; }
+    .modal-content { background: white; padding: 2rem; border-radius: 12px; width: 520px; max-width: 90%; max-height: 90vh; overflow-y: auto; }
     .form-group { margin-bottom: 1rem; text-align: left; }
     .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;}
     .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-family: inherit;}
     .admin-grid { display: grid; grid-template-columns: 1fr; gap: 3rem; }
+
+    /* Toast popup */
+    .toast-container { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.75rem; }
+    .toast { display: flex; align-items: center; gap: 12px; background: white; border-radius: 10px; padding: 1rem 1.25rem; min-width: 280px; max-width: 400px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12); border-left: 4px solid #00a76f; animation: slideIn 0.3s ease; }
+    .toast.error { border-left-color: #dc2626; }
+    .toast.warning { border-left-color: #f59e0b; }
+    .toast-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem; font-weight: 700; }
+    .toast-icon.success { background: #d1fae5; color: #00734c; }
+    .toast-icon.error { background: #fee2e2; color: #b91c1c; }
+    .toast-icon.warning { background: #fef3c7; color: #b45309; }
+    .toast-msg { font-size: 0.88rem; color: #333; font-weight: 500; flex: 1; line-height: 1.4; }
+    .toast-close { background: none; border: none; color: #999; cursor: pointer; font-size: 1rem; padding: 0; flex-shrink: 0; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* Confirm dialog */
+    .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; justify-content: center; align-items: center; z-index: 1100; }
+    .confirm-box { background: white; border-radius: 14px; padding: 2rem; width: 360px; max-width: 90%; box-shadow: 0 16px 40px rgba(0,0,0,0.15); text-align: center; }
+    .confirm-box h3 { margin: 0 0 0.75rem; color: #1e293b; font-size: 1.1rem; }
+    .confirm-box p { margin: 0 0 1.5rem; color: #64748b; font-size: 0.92rem; line-height: 1.5; }
+    .confirm-actions { display: flex; justify-content: center; gap: 1rem; }
+
+    /* Doctor search filter */
+    .filter-bar { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .filter-bar input, .filter-bar select { padding: 0.5rem 0.85rem; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 0.9rem; background: white; }
+    .filter-bar input { flex: 1; min-width: 160px; }
+
+    /* Admin nav tabs */
+    .admin-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .admin-tab { padding: 0.55rem 1.1rem; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; background: #f1f5f9; color: #64748b; }
+    .admin-tab.active { background: var(--primary, #00a76f); color: white; }
+    .admin-tab:hover:not(.active) { background: #e2e8f0; }
+
+    /* Image preview */
+    .img-preview { margin-top: 0.5rem; max-height: 100px; border-radius: 8px; object-fit: cover; border: 1px solid #eee; }
+    .img-upload-area { border: 2px dashed #ddd; border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: border-color 0.2s; }
+    .img-upload-area:hover { border-color: var(--primary, #00a76f); }
   `
 })
 export class Admin implements OnInit {
@@ -36,6 +73,14 @@ export class Admin implements OnInit {
   doctors: Doctor[] = [];
   news: any[] = [];
   eventsList: any[] = [];
+  chronicRequests: any[] = [];
+
+  // ---- Lightbox for chronic document viewer ----
+  lightboxVisible = false;
+  lightboxUrl = '';
+  lightboxFilename = '';
+  lightboxFiles: any[] = [];
+  lightboxIndex = 0;
 
   showDoctorModal = false;
   currentDoctor: Partial<Doctor> = {};
@@ -54,36 +99,116 @@ export class Admin implements OnInit {
   loginData = { username: '', password: '' };
   loginError = '';
 
+  // ---- Toast / Popup system ----
+  toasts: { id: number; msg: string; type: 'success'|'error'|'warning'; icon: string }[] = [];
+  private toastCounter = 0;
+
+  // ---- Confirm dialog ----
+  confirmVisible = false;
+  confirmMessage = 'Are you sure?';
+  private confirmResolve: ((v: boolean) => void) | null = null;
+
+  // ---- Appointment filter ----
+  apptSearchDoctor = '';
+  apptFilterSpecialty = '';
+  get specialties(): string[] {
+    const s = new Set(this.doctors.map(d => d.specialty).filter(Boolean));
+    return Array.from(s);
+  }
+  get filteredDoctors(): Doctor[] {
+    const q = this.apptSearchDoctor.toLowerCase();
+    return this.doctors.filter(d =>
+      (!q || d.name.toLowerCase().includes(q)) &&
+      (!this.apptFilterSpecialty || d.specialty === this.apptFilterSpecialty)
+    );
+  }
+
+  // ---- Appointments filter for table ----
+  apptTableSearch = '';
+  apptTableSpecialty = '';
+
+  // ---- Appointment date filter ----
+  apptDateFilter = '';
+
+  get filteredAppointments(): any[] {
+    return this.patientAppointments.filter(a => {
+      const doctorMatch = !this.apptTableSearch ||
+        (a.doctor_name || a.doctorName || '').toLowerCase().includes(this.apptTableSearch.toLowerCase()) ||
+        (a.patient_name || a.patientName || '').toLowerCase().includes(this.apptTableSearch.toLowerCase());
+      const specialtyDoc = this.doctors.find(d => d.id === a.doctor || d.name === (a.doctor_name || a.doctorName));
+      const specialtyMatch = !this.apptTableSpecialty || (specialtyDoc?.specialty === this.apptTableSpecialty);
+      const dateVal = a.appointment_date || a.date || '';
+      const dateMatch = !this.apptDateFilter || dateVal.startsWith(this.apptDateFilter);
+      return doctorMatch && specialtyMatch && dateMatch;
+    });
+  }
+
+  // ---- Active admin section tab ----
+  activeSection: 'doctors'|'appointments'|'news'|'events'|'patients'|'chronic'|'contact' = 'doctors';
+
+  // ---- Doctor list filter (in Doctors tab) ----
+  docSearch = '';
+  docFilterSpecialty = '';
+  get filteredDoctorList(): Doctor[] {
+    return this.doctors.filter(d => {
+      const matchSpec = !this.docFilterSpecialty || d.specialty === this.docFilterSpecialty;
+      const matchSearch = !this.docSearch ||
+        d.name.toLowerCase().includes(this.docSearch.toLowerCase()) ||
+        (d.specialty ?? '').toLowerCase().includes(this.docSearch.toLowerCase());
+      return matchSpec && matchSearch;
+    });
+  }
+
+
   private readonly apiBase = environment.apiUrl;
+
+  // Valid statuses the backend accepts — edit this list to match your Django STATUS_CHOICES
+  readonly VALID_STATUSES = ['Pending', 'Confirmed', 'Completed', 'Cancelled'];
 
   constructor(
     private doctorService: DoctorService,
     private http: HttpClient,
     private eventsService: EventsService,
-    private authService: AuthService  // ✅ inject AuthService
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
-    // ✅ Check sessionStorage for admin session
     const sessionAuth = sessionStorage.getItem('isAdminLoggedIn');
     if (sessionAuth === 'true') {
       this.isAdminLoggedIn = true;
+      // Defer data load so *ngIf="isAdminLoggedIn" renders first
+      setTimeout(() => this.loadData(), 0);
     }
-    this.loadData();
   }
 
+  goToDashboard() {
+    this.router.navigate(['/']);
+  }
+
+  setSection(section: typeof this.activeSection) {
+    this.activeSection = section;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const el = document.getElementById('admin-content');
+      if (el) {
+        // Offset by the navbar height so the content isn't hidden behind it
+        const navbarEl = document.querySelector('.navbar') as HTMLElement;
+        const navH = navbarEl ? navbarEl.offsetHeight : 80;
+        const y = el.getBoundingClientRect().top + window.scrollY - navH - 12;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+      }
+    }, 60);
+  }
+
+  // ===== LOGIN — admin state lives ONLY in sessionStorage, never touches localStorage =====
   login() {
     if (this.loginData.username === 'admin' && this.loginData.password === 'admin123') {
       this.isAdminLoggedIn = true;
       this.loginError = '';
       sessionStorage.setItem('isAdminLoggedIn', 'true');
-
-      // ✅ Notify navbar via AuthService
-      this.authService.saveSession(
-        { access: 'admin-token', refresh: 'admin-refresh' },
-        { first_name: 'Admin', username: this.loginData.username }
-      );
-
+      // Defer data load one tick so the dashboard *ngIf renders first
+      setTimeout(() => this.loadData(), 0);
     } else {
       this.loginError = 'Invalid username or password';
     }
@@ -93,9 +218,8 @@ export class Admin implements OnInit {
     this.isAdminLoggedIn = false;
     sessionStorage.removeItem('isAdminLoggedIn');
     this.loginData = { username: '', password: '' };
-
-    // ✅ Notify navbar via AuthService
-    this.authService.clearSession();
+    // Do NOT clear localStorage — that belongs to the patient session
+    this.router.navigate(['/']);
   }
 
   loadData() {
@@ -103,29 +227,105 @@ export class Admin implements OnInit {
     this.contactMessages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
 
     this.http.get<any[]>(`${this.apiBase}/appointments/`).subscribe({
-      next: (data: any[]) => this.patientAppointments = data,
+      next: (data: any[]) => { this.patientAppointments = data; this.cdr.detectChanges(); },
       error: () => {
         this.patientAppointments = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
+        this.cdr.detectChanges();
       }
     });
 
     this.doctorService.getDoctorsFromApi().subscribe((doctors: Doctor[]) => {
       this.doctors = doctors;
+      this.cdr.detectChanges();
     });
 
     this.loadNews();
     this.loadAdminEvents();
+    this.loadChronicRequests();
+    this.cdr.detectChanges();
+  }
+
+  loadChronicRequests() {
+    this.http.get<any[]>(`${this.apiBase}/chronic/`).subscribe({
+      next: (data) => { this.chronicRequests = data; this.cdr.detectChanges(); },
+      error: () => {
+        // Fallback to localStorage if backend is unavailable
+        this.chronicRequests = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  updateChronicStatus(req: any, newStatus: string) {
+    if (req.id && typeof req.id === 'number') {
+      // Backend request — use API
+      this.http.patch(`${this.apiBase}/chronic/${req.id}/status/`, { status: newStatus }).subscribe({
+        next: (updated: any) => {
+          req.status = updated.status;
+          this.cdr.detectChanges();
+          this.showToast(`Status updated to ${newStatus}`, 'success');
+        },
+        error: () => this.showToast('Failed to update status', 'error')
+      });
+    } else {
+      // Fallback localStorage request
+      req.status = newStatus;
+      localStorage.setItem('chronicRequests', JSON.stringify(this.chronicRequests));
+      this.showToast(`Status updated to ${newStatus}`, 'success');
+    }
+  }
+
+  // ---- Lightbox ----
+  openLightbox(files: any[], startIndex = 0) {
+    this.lightboxFiles = files;
+    this.lightboxIndex = startIndex;
+    this.lightboxUrl      = files[startIndex]?.file_url || files[startIndex]?.url || '';
+    this.lightboxFilename = files[startIndex]?.filename || `Document ${startIndex + 1}`;
+    this.lightboxVisible  = true;
+    this.cdr.detectChanges();
+  }
+
+  lightboxNext() {
+    if (this.lightboxIndex < this.lightboxFiles.length - 1) {
+      this.lightboxIndex++;
+      this.lightboxUrl      = this.lightboxFiles[this.lightboxIndex]?.file_url || '';
+      this.lightboxFilename = this.lightboxFiles[this.lightboxIndex]?.filename || '';
+      this.cdr.detectChanges();
+    }
+  }
+
+  lightboxPrev() {
+    if (this.lightboxIndex > 0) {
+      this.lightboxIndex--;
+      this.lightboxUrl      = this.lightboxFiles[this.lightboxIndex]?.file_url || '';
+      this.lightboxFilename = this.lightboxFiles[this.lightboxIndex]?.filename || '';
+      this.cdr.detectChanges();
+    }
+  }
+
+  closeLightbox() {
+    this.lightboxVisible = false;
+    this.cdr.detectChanges();
+  }
+
+  isImage(url: string): boolean {
+    return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
+  }
+
+  openFile(url: string) {
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   approve(req: any) {
     req.status = 'Approved';
     this.saveRequests();
+    this.showToast('Patient request approved.', 'success');
   }
 
   processPayment(req: any) {
     req.status = 'Completed';
     this.saveRequests();
-    alert('Payment processed successfully for ' + req.patientName);
+    this.showToast('Payment processed for ' + req.patientName, 'success');
   }
 
   saveRequests() {
@@ -147,95 +347,95 @@ export class Admin implements OnInit {
   }
 
   saveDoctor() {
+    const onSuccess = () => {
+      this.doctorService.getDoctorsFromApi().subscribe((d: Doctor[]) => { this.doctors = d; this.cdr.detectChanges(); });
+      this.showDoctorModal = false;
+      this.showToast('Doctor saved successfully!', 'success');
+    };
+    const onError = (err: any) => this.showToast('Error: ' + (err.error?.error || JSON.stringify(err.error)), 'error');
+
     if (this.currentDoctor.id) {
-      this.doctorService.updateDoctor(this.currentDoctor as Doctor).subscribe({
-        next: () => {
-          this.doctorService.getDoctorsFromApi().subscribe((d: Doctor[]) => this.doctors = d);
-          this.showDoctorModal = false;
-          alert('Doctor updated successfully!');
-        },
-        error: (err: any) => alert('Error: ' + err.error?.error)
-      });
+      this.doctorService.updateDoctor(this.currentDoctor as Doctor).subscribe({ next: onSuccess, error: onError });
     } else {
-      this.doctorService.addDoctor(this.currentDoctor as Omit<Doctor, 'id'>).subscribe({
-        next: () => {
-          this.doctorService.getDoctorsFromApi().subscribe((d: Doctor[]) => this.doctors = d);
-          this.showDoctorModal = false;
-          alert('Doctor added successfully!');
-        },
-        error: (err: any) => alert('Error: ' + err.error?.error)
-      });
+      this.doctorService.addDoctor(this.currentDoctor as Omit<Doctor, 'id'>).subscribe({ next: onSuccess, error: onError });
     }
   }
 
   deleteDoctor(id: number) {
-    if (confirm('Are you sure?')) {
+    this.showConfirm('Delete this doctor? This action cannot be undone.').then(ok => {
+      if (!ok) return;
       this.doctorService.deleteDoctor(id).subscribe({
         next: () => {
-          this.doctorService.getDoctorsFromApi().subscribe((d: Doctor[]) => this.doctors = d);
-          alert('Doctor deleted!');
+          this.doctorService.getDoctorsFromApi().subscribe((d: Doctor[]) => { this.doctors = d; this.cdr.detectChanges(); });
+          this.showToast('Doctor deleted.', 'success');
         },
-        error: (err: any) => alert('Error: ' + err.error?.error)
+        error: (err: any) => this.showToast('Error: ' + (err.error?.error || JSON.stringify(err.error)), 'error')
+      });
+    });
+  }
+
+  // ================= APPOINTMENTS =================
+  openAppointmentModal(appointment?: any) {
+    if (appointment) {
+      this.currentAppointment = { ...appointment };
+      this.isEditingAppointment = true;
+    } else {
+      this.currentAppointment = {
+        reference_id: 'SKH-' + Math.floor(Math.random() * 9000 + 1000),
+        patient_name: '', patient_phone: '', doctor: null,
+        appointment_date: '', reason: '', status: 'Pending', payment_status: 'Unpaid'
+      };
+      this.isEditingAppointment = false;
+    }
+    this.apptSearchDoctor = '';
+    this.apptFilterSpecialty = '';
+    this.showAppointmentModal = true;
+  }
+
+  saveAppointment() {
+    const payload = { ...this.currentAppointment };
+    if (this.isEditingAppointment && this.currentAppointment.id) {
+      this.http.put(`${this.apiBase}/appointments/${this.currentAppointment.id}/update/`, payload).subscribe({
+        next: () => { this.loadData(); this.showAppointmentModal = false; this.showToast('Appointment updated!', 'success'); },
+        error: (err: any) => {
+          const msg = err.error?.status?.[0] || err.error?.detail || JSON.stringify(err.error);
+          this.showToast('Save failed: ' + msg, 'error');
+        }
+      });
+    } else {
+      this.http.post(`${this.apiBase}/appointments/create/admin/`, payload).subscribe({
+        next: () => { this.loadData(); this.showAppointmentModal = false; this.showToast('Appointment added!', 'success'); },
+        error: (err: any) => {
+          const msg = err.error?.status?.[0] || err.error?.detail || JSON.stringify(err.error);
+          this.showToast('Save failed: ' + msg, 'error');
+        }
       });
     }
   }
 
-  // ================= APPOINTMENTS =================
-// ================= APPOINTMENTS =================
-openAppointmentModal(appointment?: any) {
-  if (appointment) {
-    this.currentAppointment = { ...appointment };
-    this.isEditingAppointment = true;
-  } else {
-    this.currentAppointment = {
-      reference_id: 'SKH-' + Math.floor(Math.random() * 9000 + 1000),
-      patient_name: '',
-      patient_phone: '',
-      doctor: null,
-      appointment_date: '',
-      reason: '',
-      status: 'Pending',
-      payment_status: 'Unpaid'
-    };
-    this.isEditingAppointment = false;
-  }
-  this.showAppointmentModal = true;
-}
-
-saveAppointment() {
-  if (this.isEditingAppointment && this.currentAppointment.id) {
-    this.http.put(`${this.apiBase}/appointments/${this.currentAppointment.id}/update/`, this.currentAppointment).subscribe({
-      next: () => { this.loadData(); this.showAppointmentModal = false; alert('Appointment updated!'); },
-      error: (err: any) => alert('Error: ' + JSON.stringify(err.error))
-    });
-  } else {
-    this.http.post(`${this.apiBase}/appointments/create/admin/`, this.currentAppointment).subscribe({
-      next: () => { this.loadData(); this.showAppointmentModal = false; alert('Appointment added!'); },
-      error: (err: any) => alert('Error: ' + JSON.stringify(err.error))
+  deleteAppointment(id: any) {
+    this.showConfirm('Delete this appointment?').then(ok => {
+      if (!ok) return;
+      this.http.delete(`${this.apiBase}/appointments/${id}/delete/`).subscribe({
+        next: () => { this.loadData(); this.showToast('Appointment deleted!', 'success'); },
+        error: (err: any) => this.showToast('Error: ' + JSON.stringify(err.error), 'error')
+      });
     });
   }
-}
-
-deleteAppointment(id: any) {
-  if (confirm('Are you sure?')) {
-    this.http.delete(`${this.apiBase}/appointments/${id}/delete/`).subscribe({
-      next: () => { this.loadData(); alert('Appointment deleted!'); },
-      error: (err: any) => alert('Error: ' + JSON.stringify(err.error))
-    });
-  }
-}
 
   // ================= NEWS =================
   loadNews() {
     this.http.get<any[]>(`${this.apiBase}/news/`).subscribe({
-      next: (data: any[]) => this.news = data,
-      error: (err) => console.error(err)
+      next: (data: any[]) => { this.news = data; this.cdr.detectChanges(); },
+      error: () => { this.news = []; this.cdr.detectChanges(); }
     });
   }
 
   openNewsModal(article?: any) {
     if (article) {
       this.currentNews = { ...article };
+      // Use absolute image_url so the preview <img> loads correctly across ports
+      this.currentNews.image = article.image_url || article.image || '';
     } else {
       this.currentNews = { title: '', category: '', date: '', summary: '', content: '', image: '' };
     }
@@ -243,39 +443,43 @@ deleteAppointment(id: any) {
   }
 
   saveNews() {
+    const payload = { ...this.currentNews };
     if (this.currentNews.id) {
-      this.http.put(`${this.apiBase}/news/${this.currentNews.id}/update/`, this.currentNews).subscribe({
-        next: () => { this.loadNews(); this.showNewsModal = false; alert('News updated!'); },
-        error: (err: any) => alert('Error: ' + err.error?.error)
+      this.http.put(`${this.apiBase}/news/${this.currentNews.id}/update/`, payload).subscribe({
+        next: () => { this.loadNews(); this.showNewsModal = false; this.showToast('News updated!', 'success'); },
+        error: (err: any) => this.showToast('Error: ' + (err.error?.error || JSON.stringify(err.error)), 'error')
       });
     } else {
-      this.http.post(`${this.apiBase}/news/create/`, this.currentNews).subscribe({
-        next: () => { this.loadNews(); this.showNewsModal = false; alert('News added!'); },
-        error: (err: any) => alert('Error: ' + err.error?.error)
+      this.http.post(`${this.apiBase}/news/create/`, payload).subscribe({
+        next: () => { this.loadNews(); this.showNewsModal = false; this.showToast('News added!', 'success'); },
+        error: (err: any) => this.showToast('Error: ' + (err.error?.error || JSON.stringify(err.error)), 'error')
       });
     }
   }
 
   deleteNews(id: number) {
-    if (confirm('Are you sure?')) {
+    this.showConfirm('Delete this news article?').then(ok => {
+      if (!ok) return;
       this.http.delete(`${this.apiBase}/news/${id}/delete/`).subscribe({
-        next: () => { this.loadNews(); alert('News deleted!'); },
-        error: (err: any) => alert('Error: ' + err.error?.error)
+        next: () => { this.loadNews(); this.showToast('News deleted!', 'success'); },
+        error: (err: any) => this.showToast('Error: ' + (err.error?.error || JSON.stringify(err.error)), 'error')
       });
-    }
+    });
   }
 
   // ================= EVENTS =================
   loadAdminEvents() {
     this.eventsService.getEvents().subscribe({
-      next: (data) => (this.eventsList = data),
-      error: () => (this.eventsList = [])
+      next: (data) => { this.eventsList = data; this.cdr.detectChanges(); },
+      error: () => { this.eventsList = []; }
     });
   }
 
   openEventModal(ev?: any) {
     if (ev) {
       this.currentEvent = { ...ev };
+      // Use absolute image_url so the preview <img> loads correctly across ports
+      this.currentEvent.image = (ev as any).image_url || ev.image || '';
     } else {
       this.currentEvent = {
         title: '', tag: '', date: '',
@@ -290,7 +494,7 @@ deleteAppointment(id: any) {
     const finish = () => {
       this.loadAdminEvents();
       this.showEventModal = false;
-      alert(editing ? 'Event updated!' : 'Event added!');
+      this.showToast(editing ? 'Event updated!' : 'Event added!', 'success');
     };
     if (editing) {
       const id = Number(this.currentEvent.id);
@@ -301,13 +505,54 @@ deleteAppointment(id: any) {
   }
 
   deleteEvent(id: number) {
-    if (confirm('Are you sure?')) {
+    this.showConfirm('Delete this event?').then(ok => {
+      if (!ok) return;
       this.eventsService.deleteEvent(id).subscribe({
         next: () => {
           this.loadAdminEvents();
-          alert('Event deleted!');
+          this.showToast('Event deleted!', 'success');
         }
       });
-    }
+    });
+  }
+
+  // ================= TOAST SYSTEM =================
+  showToast(msg: string, type: 'success'|'error'|'warning' = 'success') {
+    const id = ++this.toastCounter;
+    const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : '!';
+    this.toasts = [...this.toasts, { id, msg, type, icon }];
+    this.cdr.detectChanges();
+    setTimeout(() => this.dismissToast(id), 5000);
+  }
+
+  dismissToast(id: number) {
+    this.toasts = this.toasts.filter(t => t.id !== id);
+    this.cdr.detectChanges();
+  }
+
+  // ================= CONFIRM DIALOG =================
+  showConfirm(message: string): Promise<boolean> {
+    this.confirmMessage = message;
+    this.confirmVisible = true;
+    this.cdr.detectChanges();
+    return new Promise(resolve => {
+      this.confirmResolve = resolve;
+    });
+  }
+
+  onConfirmYes() {
+    this.confirmVisible = false;
+    this.cdr.detectChanges();
+    const resolve = this.confirmResolve;
+    this.confirmResolve = null;
+    resolve?.(true);
+  }
+
+  onConfirmNo() {
+    this.confirmVisible = false;
+    this.cdr.detectChanges();
+    const resolve = this.confirmResolve;
+    this.confirmResolve = null;
+    resolve?.(false);
   }
 }

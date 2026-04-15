@@ -31,6 +31,10 @@ export class DoctorService {
                 doctors.forEach((d: Doctor) => {
                     d.nextSlot = d.next_slot;
                     d.queueLength = d.queue_length;
+                    // Use absolute image URL from backend if available
+                    if ((d as any).image_url) {
+                        d.image = (d as any).image_url;
+                    }
                 });
                 localStorage.setItem('doctors', JSON.stringify(doctors));
             }),

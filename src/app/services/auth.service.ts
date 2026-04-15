@@ -19,6 +19,7 @@ export class AuthService {
     first_name: string;
     last_name: string;
     phone: string;
+    redirect_url?: string;
   }): Observable<any> {
     return this.http.post(`${this.base}/register/`, data);
   }
@@ -32,6 +33,9 @@ export class AuthService {
     localStorage.setItem('access_token', tokens.access);
     localStorage.setItem('refresh_token', tokens.refresh);
     localStorage.setItem('currentUser', JSON.stringify(userData));
+    // A real patient is logging in — kill any stale admin session
+    // that might have been left from a previous admin login in this tab
+    sessionStorage.removeItem('isAdminLoggedIn');
     this.loggedInSubject.next(true); // 🔔 notifies navbar instantly
   }
 
@@ -40,6 +44,8 @@ export class AuthService {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('currentUser');
+    // Also clear admin session so navbar resets cleanly
+    sessionStorage.removeItem('isAdminLoggedIn');
     this.loggedInSubject.next(false); // 🔔 notifies navbar instantly
   }
 

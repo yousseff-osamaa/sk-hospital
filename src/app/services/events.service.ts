@@ -49,6 +49,11 @@ export class EventsService {
 
   getEvents(): Observable<Record<string, unknown>[]> {
     return this.http.get<Record<string, unknown>[]>(`${this.apiBase}/events/`).pipe(
+      map((events) => events.map(e => ({
+        ...e,
+        // prefer the absolute image_url returned by the backend
+        image: (e['image_url'] as string) || (e['image'] as string) || ''
+      }))),
       catchError(() => of(this.readLocal()))
     );
   }
@@ -85,8 +90,14 @@ export class EventsService {
     );
   }
 
+  createEventWithFile(formData: FormData): Observable<void> {
+    return this.http.post<void>(`${this.apiBase}/events/create/`, formData).pipe(
+      map(() => undefined)
+    );
+  }
+
   updateEvent(id: number, payload: Record<string, unknown>): Observable<void> {
-    return this.http.put<void>(`${this.apiBase}/events/${id}/update/`, payload).pipe(
+    return this.http.patch<void>(`${this.apiBase}/events/${id}/update/`, payload).pipe(
       map(() => undefined),
       catchError(() => {
         const list = this.readLocal();
@@ -97,6 +108,12 @@ export class EventsService {
         }
         return of(undefined);
       })
+    );
+  }
+
+  updateEventWithFile(id: number, formData: FormData): Observable<void> {
+    return this.http.patch<void>(`${this.apiBase}/events/${id}/update/`, formData).pipe(
+      map(() => undefined)
     );
   }
 

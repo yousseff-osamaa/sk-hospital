@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { switchMap, tap } from 'rxjs/operators';
 import { DoctorService, Doctor } from '../../services/doctor.service';
@@ -9,26 +9,43 @@ import { environment } from '../../../environments/environment';
 
 declare var lucide: any;
 
-
-
 @Component({
     selector: 'app-appointment',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, RouterLink],
     templateUrl: './appointment.component.html',
     styleUrls: ['./appointment.component.scss']
 })
 export class AppointmentComponent implements OnInit {
     doctors: Doctor[] = [];
-
     selectedDoctor: Doctor | null = null;
-    
-    // booking states: form, confirmation, payment, success
-    bookingState: 'form' | 'confirmation' | 'payment' | 'success' = 'form';
-    
+
+    // booking states: form → confirmation → success
+    bookingState: 'form' | 'confirmation' | 'success' = 'form';
+
     ref = '';
     queuePosition = 0;
     isDropdownOpen = false;
+    isSubmitting = false;
+
+    // ── Doctor filter state ──
+    specialtyFilter = '';
+    doctorSearch = '';
+
+    get uniqueSpecialties(): string[] {
+        const s = new Set(this.doctors.map(d => d.specialty).filter(Boolean));
+        return Array.from(s).sort();
+    }
+
+    get filteredDoctors(): Doctor[] {
+        return this.doctors.filter(d => {
+            const matchSpec = !this.specialtyFilter || d.specialty === this.specialtyFilter;
+            const matchSearch = !this.doctorSearch ||
+                d.name.toLowerCase().includes(this.doctorSearch.toLowerCase()) ||
+                (d.specialty ?? '').toLowerCase().includes(this.doctorSearch.toLowerCase());
+            return matchSpec && matchSearch;
+        });
+    }
 
     bookingData = {
         firstName: '',
@@ -37,18 +54,12 @@ export class AppointmentComponent implements OnInit {
         date: '',
         reason: ''
     };
-    
-    paymentData = {
-        cardName: '',
-        cardNumber: '',
-        expiry: '',
-        cvv: ''
-    };
 
     constructor(
         private route: ActivatedRoute,
         private doctorService: DoctorService,
-        private http: HttpClient
+        private http: HttpClient,
+        private cdr: ChangeDetectorRef
     ) {}
 
     ngOnInit() {
@@ -65,6 +76,8 @@ export class AppointmentComponent implements OnInit {
         this.doctorService.getDoctorsFromApi().pipe(
             tap((doctors) => {
                 this.doctors = doctors.length ? doctors : this.doctorService.getDoctors();
+                // Force re-render so specialty dropdown + doctor list populate immediately
+                this.cdr.detectChanges();
             }),
             switchMap(() => this.route.queryParams)
         ).subscribe((params) => {
@@ -100,7 +113,6 @@ export class AppointmentComponent implements OnInit {
     handleSubmit(event: Event) {
         event.preventDefault();
         if (!this.selectedDoctor) return;
-        if (!this.bookingData.firstName.trim() || !this.bookingData.lastName.trim()) return;
 
         this.ref = 'SKH-' + Math.floor(1000 + Math.random() * 9000).toString();
         this.queuePosition = (this.selectedDoctor?.queueLength ?? 0) + 1;
@@ -108,9 +120,9 @@ export class AppointmentComponent implements OnInit {
         this.reinitIcons();
     }
 
-    submitPayment(event: Event) {
-        event.preventDefault();
-        if (!this.selectedDoctor) return;
+    confirmBooking() {
+        if (this.isSubmitting || !this.selectedDoctor) return;
+        this.isSubmitting = true;
 
         const dateStr = this.bookingData.date || new Date().toISOString().slice(0, 10);
         const patientName = this.getPatientFullName();
@@ -123,13 +135,12 @@ export class AppointmentComponent implements OnInit {
             reason: this.bookingData.reason || ''
         };
 
-        this.http.post<{ message?: string }>(`${environment.apiUrl}/appointments/create/`, payload).subscribe({
-            next: () => this.afterBookingSaved(),
-            error: () => {
-                this.afterBookingSaved();
-                console.warn('Appointment API unavailable; saved locally only.');
-            }
-        });
+        // Save locally and advance UI immediately — never block on the API
+        this.afterBookingSaved();
+
+        // Fire-and-forget: sync to backend in background
+        this.http.post<{ message?: string }>(`${environment.apiUrl}/appointments/create/`, payload)
+            .subscribe({ next: () => {}, error: () => {} });
     }
 
     private afterBookingSaved() {
@@ -142,11 +153,11 @@ export class AppointmentComponent implements OnInit {
             patientPhone: this.bookingData.phone,
             date: this.bookingData.date || new Date().toLocaleDateString(),
             reason: this.bookingData.reason,
-            status: 'Confirmed',
-            paymentStatus: 'Paid'
+            status: 'Confirmed'
         });
         localStorage.setItem('patientAppointments', JSON.stringify(appointments));
         this.bookingState = 'success';
+        this.isSubmitting = false;
         this.reinitIcons();
     }
 
@@ -154,7 +165,7 @@ export class AppointmentComponent implements OnInit {
         this.bookingState = 'form';
         this.selectedDoctor = null;
         this.bookingData = { firstName: '', lastName: '', phone: '', date: '', reason: '' };
-        this.paymentData = { cardName: '', cardNumber: '', expiry: '', cvv: '' };
+        this.isSubmitting = false;
         this.reinitIcons();
     }
 
@@ -164,9 +175,7 @@ export class AppointmentComponent implements OnInit {
 
     private reinitIcons() {
         setTimeout(() => {
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }, 100);
     }
 }

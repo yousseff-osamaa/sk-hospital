@@ -34,11 +34,17 @@ export class App implements OnInit {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe(() => {
+      // Smooth scroll to top on every route change
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Re-init Lucide icons AFTER Angular finishes rendering the new route
+      // Use two ticks: first for Angular DOM update, second for Lucide
       setTimeout(() => {
         if (typeof lucide !== 'undefined') {
           lucide.createIcons();
         }
-      }, 50);
+      }, 150);
     });
   }
 }
+

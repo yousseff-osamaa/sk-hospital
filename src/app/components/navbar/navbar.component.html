@@ -25,8 +25,60 @@
       <img src="/assets/logo2.png" alt="Souad Kafafi Hospital" class="logo-img">
     </div>
 
-    <!-- Nav Links -->
-    <ul class="nav-links" [class.open]="isMenuOpen">
+    <!-- ══════════════════════════════════════════
+         ADMIN NAV — only shown when isAdmin=true
+         ══════════════════════════════════════════ -->
+    <ul class="nav-links" [class.open]="isMenuOpen" *ngIf="isAdmin">
+      <li>
+        <a routerLink="/admin" routerLinkActive="active"
+           (click)="isMenuOpen=false">Dashboard</a>
+      </li>
+      <li>
+        <a routerLink="/" routerLinkActive="active"
+           [routerLinkActiveOptions]="{exact: true}"
+           (click)="isMenuOpen=false">View Site</a>
+      </li>
+    </ul>
+
+    <!-- ══════════════════════════════════════════
+         PATIENT NAV — shown when patient is logged in
+         ══════════════════════════════════════════ -->
+    <ul class="nav-links" [class.open]="isMenuOpen" *ngIf="isPatient && !isAdmin">
+      <li>
+        <a routerLink="/" routerLinkActive="active"
+           [routerLinkActiveOptions]="{exact: true}"
+           (click)="isMenuOpen=false">Home</a>
+      </li>
+      <li>
+        <a routerLink="/doctors" routerLinkActive="active"
+           (click)="isMenuOpen=false">Doctors</a>
+      </li>
+      <li>
+        <a routerLink="/appointment" routerLinkActive="active"
+           (click)="isMenuOpen=false">Book Appointment</a>
+      </li>
+      <li>
+        <a routerLink="/portal" routerLinkActive="active"
+           (click)="isMenuOpen=false">My Portal</a>
+      </li>
+      <li>
+        <a routerLink="/news" routerLinkActive="active"
+           (click)="isMenuOpen=false">News</a>
+      </li>
+      <li>
+        <a routerLink="/events" routerLinkActive="active"
+           (click)="isMenuOpen=false">Events</a>
+      </li>
+      <li>
+        <a routerLink="/contact" routerLinkActive="active"
+           (click)="isMenuOpen=false">Contact Us</a>
+      </li>
+    </ul>
+
+    <!-- ══════════════════════════════════════════
+         GUEST NAV — shown when nobody is logged in
+         ══════════════════════════════════════════ -->
+    <ul class="nav-links" [class.open]="isMenuOpen" *ngIf="!isPatient && !isAdmin">
       <li>
         <a routerLink="/" routerLinkActive="active"
            [routerLinkActiveOptions]="{exact: true}"
@@ -49,10 +101,6 @@
            (click)="isMenuOpen=false">Schedules</a>
       </li>
       <li>
-        <a routerLink="/portal" routerLinkActive="active"
-           (click)="isMenuOpen=false">Patient portal</a>
-      </li>
-      <li>
         <a routerLink="/news" routerLinkActive="active"
            (click)="isMenuOpen=false">News</a>
       </li>
@@ -69,53 +117,84 @@
     <!-- Nav Actions -->
     <div class="nav-actions" style="display: flex; align-items: center; gap: 1.5rem;">
 
-      <!-- Emergency Call -->
+      <!-- Emergency Call — always visible -->
       <a href="tel:16111" class="btn-emergency">
         <i data-lucide="phone-call"></i> 16111
       </a>
 
-      <!-- Book Appointment -->
-      <button class="btn-book" routerLink="/appointment">
+      <!-- Book button — hide when admin is logged in -->
+      <button *ngIf="!isAdmin" class="btn-book" routerLink="/appointment">
         Book Appointment
       </button>
 
-      <!-- Logged in → Admin name + Logout -->
-      <ng-container *ngIf="isLoggedIn">
+      <!-- GUEST → Login -->
+      <ng-container *ngIf="!isLoggedIn && !isAdmin">
+        <a routerLink="/portal"
+           style="color: white;
+                  opacity: 0.85;
+                  font-size: 0.95rem;
+                  font-weight: 500;
+                  transition: opacity 0.3s;
+                  text-decoration: none;
+                  border-left: 1px solid rgba(255,255,255,0.2);
+                  padding-left: 1.5rem;"
+           onmouseover="this.style.opacity='1'"
+           onmouseout="this.style.opacity='0.85'">Login</a>
+      </ng-container>
+
+      <!-- PATIENT logged in → name + Portal + Logout -->
+      <ng-container *ngIf="isPatient && !isAdmin">
         <div style="display: flex;
                     align-items: center;
                     gap: 1rem;
                     border-left: 1px solid rgba(255,255,255,0.2);
                     padding-left: 1.5rem;">
-
-          <span style="display: flex;
-                       align-items: center;
-                       gap: 6px;
-                       color: white;
-                       font-size: 0.9rem;
-                       font-weight: 600;">
-            <i data-lucide="shield-check"
-               style="width: 1px; height: 16px; color: #4ade80;"></i>
-            {{ currentUser?.first_name || 'Admin' }}
+          <span style="display: flex; align-items: center; gap: 6px; color: white; font-size: 0.9rem; font-weight: 600;">
+            <i data-lucide="user" style="width: 16px; height: 16px; color: #4ade80;"></i>
+            {{ currentUser?.name?.split(' ')[0] || 'Patient' }}
           </span>
-
+          <a routerLink="/portal"
+             style="color: #4ade80; font-size: 0.88rem; font-weight: 600; text-decoration: none;">
+            My Portal
+          </a>
           <button (click)="logout()"
-                  style="background: rgba(255,255,255,0.12);
-                         color: white;
-                         border: 1px solid rgba(255,255,255,0.25);
-                         border-radius: 8px;
-                         padding: 0.4rem 1rem;
-                         font-size: 0.88rem;
-                         font-weight: 500;
-                         cursor: pointer;
-                         display: flex;
-                         align-items: center;
-                         gap: 6px;"
+                  style="background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.25);
+                         border-radius: 8px; padding: 0.4rem 1rem; font-size: 0.88rem; font-weight: 500;
+                         cursor: pointer; display: flex; align-items: center; gap: 6px;"
                   onmouseover="this.style.background='rgba(255,255,255,0.22)'"
                   onmouseout="this.style.background='rgba(255,255,255,0.12)'">
             <i data-lucide="log-out" style="width: 14px; height: 14px;"></i>
             Logout
           </button>
+        </div>
+      </ng-container>
 
+      <!-- ADMIN logged in → Admin label + go to Dashboard + Logout -->
+      <ng-container *ngIf="isAdmin">
+        <div style="display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                    border-left: 1px solid rgba(255,255,255,0.2);
+                    padding-left: 1.5rem;">
+          <span style="display: flex; align-items: center; gap: 6px; color: white; font-size: 0.9rem; font-weight: 600;">
+            <i data-lucide="shield-check" style="width: 16px; height: 16px; color: #f59e0b;"></i>
+            Admin
+          </span>
+          <a routerLink="/admin"
+             style="background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.4);
+                    border-radius: 8px; padding: 0.4rem 1rem; font-size: 0.88rem; font-weight: 600;
+                    text-decoration: none;">
+            Dashboard
+          </a>
+          <button (click)="logout()"
+                  style="background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.25);
+                         border-radius: 8px; padding: 0.4rem 1rem; font-size: 0.88rem; font-weight: 500;
+                         cursor: pointer; display: flex; align-items: center; gap: 6px;"
+                  onmouseover="this.style.background='rgba(255,255,255,0.22)'"
+                  onmouseout="this.style.background='rgba(255,255,255,0.12)'">
+            <i data-lucide="log-out" style="width: 14px; height: 14px;"></i>
+            Logout
+          </button>
         </div>
       </ng-container>
 

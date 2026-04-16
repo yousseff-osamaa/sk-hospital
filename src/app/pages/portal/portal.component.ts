@@ -16,9 +16,14 @@ declare var lucide: any;
     styleUrls: ['./portal.component.scss']
 })
 export class PatientPortalComponent implements OnInit, AfterViewInit {
-onImageSelected: any;
+    onImageSelected: any;
 
-    constructor(private authService: AuthService, private router: Router, private zone: NgZone, private http: HttpClient) {}
+    constructor(
+        private authService: AuthService,
+        private router: Router,
+        private zone: NgZone,
+        private http: HttpClient
+    ) {}
 
     private readonly apiBase = environment.apiUrl;
 
@@ -28,11 +33,10 @@ onImageSelected: any;
     // ================= AUTH =================
     regFirstName: string = '';
     regLastName: string = '';
-    regEmail: string = ''
+    regEmail: string = '';
     regPhone: string = '';
     regPassword: string = '';
 
-    // Single full-name login field
     loginEmail = '';
     loginPassword = '';
 
@@ -48,18 +52,9 @@ onImageSelected: any;
     insuranceId: string = '';
 
     insuranceCompanies: string[] = [
-        'Egycare Healthcare',
-        'MedNet Egypt',
-        'Nextcare',
-        'GlobeMed Egypt',
-        'Neuron Egypt',
-        'Care Plus',
-        'Med Right',
-        'Med Sure',
-        'Unicare Egypt',
-        'Misr Healthcare Network',
-        'Al Ahly Medical Company',
-        'Limitless Care'
+        'Egycare Healthcare', 'MedNet Egypt', 'Nextcare', 'GlobeMed Egypt',
+        'Neuron Egypt', 'Care Plus', 'Med Right', 'Med Sure',
+        'Unicare Egypt', 'Misr Healthcare Network', 'Al Ahly Medical Company', 'Limitless Care'
     ];
 
     // ================= ACTIVATION =================
@@ -91,7 +86,7 @@ onImageSelected: any;
     isSubmitted: any;
 
     // ================= POPUP / TOAST =================
-    toasts: { id: number; msg: string; type: 'success'|'error'|'warning'; icon: string }[] = [];
+    toasts: { id: number; msg: string; type: 'success' | 'error' | 'warning'; icon: string }[] = [];
     private toastCounter = 0;
 
     confirmVisible = false;
@@ -100,78 +95,87 @@ onImageSelected: any;
 
     // =====================================================
 
-  
-ngOnInit() {
+    ngOnInit() {
         const usr = localStorage.getItem('currentUser');
         if (usr) {
             const parsedUser = JSON.parse(usr);
-            
-            // إذا كان المستخدم Admin
+
             if (parsedUser?.username) {
                 this.router.navigate(['/admin']);
                 return;
             }
 
-            // إذا كان Patient مسجل دخول بالفعل:
             this.currentUser = parsedUser;
-            
-            // التحقق من المسار الحالي:
-            // إذا كان المستخدم في صفحة البورتال، نعرض له الداشبورد والبيانات
+
             if (this.router.url.includes('portal')) {
                 this.viewState = 'dashboard';
                 this.loadPatientData();
             }
         }
-        // تحميل طلبات الأدوية
-        const allChronic = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
-        this.chronicRequests = allChronic.filter((r: any) =>
-            r.patientEmail === this.currentUser?.email
-        );
+
+        // Always load chronic from localStorage on init
+        this.loadChronicRequests();
     }
-    // loadPatientData() {
-    //     if (!this.currentUser) return;
 
-    //     const allAppointments = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
-    //     this.myAppointments = allAppointments.filter((a: any) => a.patientPhone === this.currentUser.phone);
+    // ─────────────────────────────────────────────────────────────────
+    // loadChronicRequests
+    // Reads ONLY from localStorage key 'chronicRequests'.
+    // Admin sets r.status = 'Approved' | 'Rejected' in localStorage.
+    // Patient portal re-reads on every tab switch to show latest status.
+    // ─────────────────────────────────────────────────────────────────
+    loadChronicRequests() {
+        const all: any[] = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
+        this.chronicRequests = all
+            .filter((r: any) => r.patientEmail === this.currentUser?.email)
+            .map((r: any) => ({
+                id:        r.id,
+                medName:   r.medName   || r.med_name || 'Chronic Med',
+                condition: r.condition || 'General',
+                doctor:    r.doctor    || '',
+                duration:  r.duration  || '',
+                status:    r.status    || 'Pending',   // ← admin writes here
+                files:     r.files     || [],
+                date:      r.date      || ''
+            }));
+    }
 
-    //     this.labResults = [
-    //         { date: '2026-03-15', name: 'CBC', result: 'Normal', status: 'Final' },
-    //         { date: '2026-03-15', name: 'Lipid Profile', result: 'High Cholesterol', status: 'Final' }
-    //     ];
+    loadPatientData() {
+        if (!this.currentUser) return;
 
-    //     this.imagingRecords = [
-    //         { date: '2026-03-12', type: 'Chest X-Ray', findings: 'Normal', id: 'XR-7721' }
-    //     ];
+        const allAppointments: any[] = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
+        this.myAppointments = allAppointments.filter(
+            (a: any) => a.patientPhone === this.currentUser.phone || a.patientEmail === this.currentUser.email
+        );
 
-    //     if (this.currentUser.insuranceIdFile) {
-    //         this.insuranceFile = this.currentUser.insuranceIdFile;
-    //         this.uploadSuccess = true;
-    //     }
+        this.labResults = [
+            { date: '2026-03-15', name: 'CBC', result: 'Normal', status: 'Final' },
+            { date: '2026-03-15', name: 'Lipid Profile', result: 'High Cholesterol', status: 'Final' }
+        ];
 
-    //     setTimeout(() => { if (lucide) lucide.createIcons(); }, 100);
-    // }
-   
-   loadPatientData() {
-    this.http.get<any[]>(`${this.apiBase}/appointments/`).subscribe({
-        next: (data) => {
-            console.log("🔥 RAW BACKEND DATA:", data);
+        this.imagingRecords = [
+            { date: '2026-03-12', type: 'Chest X-Ray', findings: 'Normal', id: 'XR-7721' }
+        ];
 
-            console.log("🔥 FIRST ITEM:", data[0]);
-
-          this.myAppointments = data.map(a => ({
-    doctorName: a.doctorName || a.doctor_name || a.doctor,
-    specialty: a.specialty || a.doctor_specialty,
-    date: a.date || a.appointment_date,
-    status: a.status || 'Pending',
-    id: a.id
-}));
+        if (this.currentUser.insuranceIdFile) {
+            this.insuranceFile = this.currentUser.insuranceIdFile;
+            this.uploadSuccess = true;
         }
-    });
-}
+
+        // Refresh chronic list every time patient data loads
+        this.loadChronicRequests();
+
+        setTimeout(() => { if (lucide) lucide.createIcons(); }, 100);
+    }
 
     setActiveTab(tab: any) {
         this.activeTab = tab;
-        // Smooth scroll to the content area after Angular renders the tab
+
+        // Re-read localStorage when patient opens the chronic tab so
+        // any admin approve/reject shows immediately without page reload
+        if (tab === 'chronic') {
+            this.loadChronicRequests();
+        }
+
         setTimeout(() => {
             const el = document.getElementById('portal-main');
             if (el) {
@@ -189,32 +193,21 @@ ngOnInit() {
 
     // ================= AUTH =================
     goToRegister() { this.viewState = 'register'; }
-    goToLogin() { this.viewState = 'login'; this.loginTab = 'patient'; }
+    goToLogin()    { this.viewState = 'login'; this.loginTab = 'patient'; }
 
-loginAdmin() {
-    this.adminLoginError = '';
-    
-    // Check credentials
-    if (this.adminUsername === 'admin' && this.adminPassword === 'admin123') {
-        // 1. Set the admin session
-        sessionStorage.setItem('isAdminLoggedIn', 'true');
-        
-        // 2. Clear any existing patient data to avoid conflicts
-        localStorage.removeItem('currentUser'); 
-
-        // 3. Open the admin dashboard in a new tab
-        const url = this.router.serializeUrl(
-            this.router.createUrlTree(['/admin'])
-        );
-        window.open(url, '_blank');
-
-        // Optional: Reset login fields after opening
-        this.adminUsername = '';
-        this.adminPassword = '';
-    } else {
-        this.adminLoginError = 'Invalid username or password';
+    loginAdmin() {
+        this.adminLoginError = '';
+        if (this.adminUsername === 'admin' && this.adminPassword === 'admin123') {
+            sessionStorage.setItem('isAdminLoggedIn', 'true');
+            localStorage.removeItem('currentUser');
+            const url = this.router.serializeUrl(this.router.createUrlTree(['/admin']));
+            window.open(url, '_blank');
+            this.adminUsername = '';
+            this.adminPassword = '';
+        } else {
+            this.adminLoginError = 'Invalid username or password';
+        }
     }
-}
 
     private readProfiles(): any[] {
         return JSON.parse(localStorage.getItem('portalProfiles') || '[]');
@@ -223,11 +216,11 @@ loginAdmin() {
     private upsertProfile(profile: { firstName: string; lastName: string; email: string; phone: string }) {
         const profiles = this.readProfiles();
         const first = profile.firstName.trim().toLowerCase();
-        const last = profile.lastName.trim().toLowerCase();
+        const last  = profile.lastName.trim().toLowerCase();
         const idx = profiles.findIndex(
             (p: any) =>
                 (p.firstName ?? '').trim().toLowerCase() === first &&
-                (p.lastName ?? '').trim().toLowerCase() === last
+                (p.lastName  ?? '').trim().toLowerCase() === last
         );
         if (idx > -1) {
             profiles[idx] = { ...profiles[idx], ...profile };
@@ -238,11 +231,11 @@ loginAdmin() {
     }
 
     register() {
-        const first = this.regFirstName?.trim() ?? '';
-        const last = this.regLastName?.trim() ?? '';
-        const email = this.regEmail?.trim() ?? '';
-        const phone = this.regPhone?.trim() ?? '';
-        const password = this.regPassword ?? '';
+        const first    = this.regFirstName?.trim() ?? '';
+        const last     = this.regLastName?.trim()  ?? '';
+        const email    = this.regEmail?.trim()      ?? '';
+        const phone    = this.regPhone?.trim()      ?? '';
+        const password = this.regPassword           ?? '';
 
         if (!first || !last || !email || !phone || !password) {
             this.showToast('First name, last name, email, phone number, and password are required.', 'warning');
@@ -250,100 +243,81 @@ loginAdmin() {
         }
 
         this.authService.register({
-            email,
-            password,
-            first_name: first,
-            last_name: last,
-            phone,
+            email, password,
+            first_name: first, last_name: last, phone,
             redirect_url: `${window.location.origin}/verify-email`,
         }).subscribe({
             next: () => {
-                this.upsertProfile({
-                    firstName: first,
-                    lastName: last,
-                    email,
-                    phone
-                });
+                this.upsertProfile({ firstName: first, lastName: last, email, phone });
                 this.showToast('Account created! Check your email to verify, then log in.', 'success');
                 this.viewState = 'login';
             },
             error: (err) => {
                 const e = err.error;
-                const msg =
-                    e?.email?.[0] ||
-                    e?.phone?.[0] ||
-                    e?.password?.[0] ||
-                    e?.detail ||
-                    (typeof e === 'string' ? e : null) ||
-                    'Registration failed. Please try again.';
+                const msg = e?.email?.[0] || e?.phone?.[0] || e?.password?.[0] || e?.detail ||
+                    (typeof e === 'string' ? e : null) || 'Registration failed. Please try again.';
                 this.showToast(msg, 'error');
             }
         });
     }
-login() {
-    const email = this.loginEmail.trim().toLowerCase();
-    const password = this.loginPassword;
 
-    if (!email || !password) {
-        this.showToast('Please enter your email and password.', 'warning');
-        return;
-    }
+    login() {
+        const email    = this.loginEmail.trim().toLowerCase();
+        const password = this.loginPassword;
 
-    const profiles = this.readProfiles();
-    const profile = profiles.find(p => p.email.toLowerCase() === email);
-
-    if (!profile) {
-        this.showToast('Account not found. Please register first.', 'error');
-        return;
-    }
-
-    this.authService.login(email, password).subscribe({
-        next: (tokens) => {
-            const userData = {
-                name: `${profile.firstName} ${profile.lastName}`.trim(),
-                email: profile.email,
-                phone: profile.phone ?? '',
-            };
-            
-            // حفظ الجلسة في localStorage
-            this.authService.saveSession(tokens, userData);
-            this.currentUser = userData;
-            
-            this.showToast('Login successful!', 'success');
-
-            // --- التوجيه إلى الصفحة الرئيسية ---
-            this.router.navigate(['/home']); 
-        },
-        error: (err) => {
-            this.showToast('Invalid email or password.', 'error');
+        if (!email || !password) {
+            this.showToast('Please enter your email and password.', 'warning');
+            return;
         }
-    });
-}
+
+        const profiles = this.readProfiles();
+        const profile  = profiles.find((p: any) => p.email.toLowerCase() === email);
+
+        if (!profile) {
+            this.showToast('Account not found. Please register first.', 'error');
+            return;
+        }
+
+        this.authService.login(email, password).subscribe({
+            next: (tokens) => {
+                const userData = {
+                    name:  `${profile.firstName} ${profile.lastName}`.trim(),
+                    email: profile.email,
+                    phone: profile.phone ?? '',
+                };
+                this.authService.saveSession(tokens, userData);
+                this.currentUser = userData;
+                this.showToast('Login successful!', 'success');
+                this.router.navigate(['/home']);
+            },
+            error: () => {
+                this.showToast('Invalid email or password.', 'error');
+            }
+        });
+    }
 
     logout() {
         this.authService.clearSession();
         this.currentUser = null;
         this.viewState = 'login';
     }
-   cancelAppointment(appt: any) {
-    this.showConfirm('Cancel this appointment?').then(ok => {
-        this.zone.run(() => {
-            if (!ok) return;
 
-            this.http.delete(`${this.apiBase}/appointments/${appt.id}/delete/`).subscribe({
-                next: () => {
-                    // بعد الحذف من السيرفر → نعمل refresh
-                    this.loadPatientData();
-
-                    this.showToast('Appointment cancelled.', 'success');
-                },
-                error: () => {
-                    this.showToast('Failed to cancel appointment.', 'error');
-                }
+    cancelAppointment(appt: any) {
+        this.showConfirm('Cancel this appointment?').then(ok => {
+            this.zone.run(() => {
+                if (!ok) return;
+                this.http.delete(`${this.apiBase}/appointments/${appt.id}/delete/`).subscribe({
+                    next: () => {
+                        this.loadPatientData();
+                        this.showToast('Appointment cancelled.', 'success');
+                    },
+                    error: () => {
+                        this.showToast('Failed to cancel appointment.', 'error');
+                    }
+                });
             });
         });
-    });
-}
+    }
 
     // ================= INSURANCE =================
     onFileSelect(event: any) {
@@ -375,50 +349,33 @@ login() {
             return;
         }
 
-        const form = new FormData();
-        form.append('patient_name',  this.currentUser.name  ?? '');
-        form.append('patient_email', this.currentUser.email ?? '');
-        form.append('patient_phone', this.currentUser.phone ?? '');
-        form.append('med_name',      this.chronic.medName   ?? '');
-        form.append('condition',     this.chronic.condition ?? '');
-        form.append('doctor',        this.chronic.doctor    ?? '');
-        form.append('duration',      this.chronic.duration  ?? '');
+        // ── Persist to localStorage only ──
+        // Admin dashboard reads 'chronicRequests' and updates r.status
+        // Patient portal re-reads on every tab open to reflect changes
+        const newRequest = {
+            id:           Date.now(),
+            patientName:  this.currentUser.name,
+            patientEmail: this.currentUser.email,
+            patientPhone: this.currentUser.phone || '',
+            medName:      this.chronic.medName   || 'Chronic Med',
+            condition:    this.chronic.condition || 'General',
+            doctor:       this.chronic.doctor    || '',
+            duration:     this.chronic.duration  || '',
+            files:        this.chronic.files.map((f: File) => f.name),
+            status:       'Pending',   // admin sets 'Approved' or 'Rejected'
+            date:         new Date().toLocaleDateString()
+        };
 
-        this.chronic.files.forEach((f: File) => form.append('files', f, f.name));
+        const all: any[] = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
+        all.push(newRequest);
+        localStorage.setItem('chronicRequests', JSON.stringify(all));
 
-        // Try backend first; fall back to localStorage on network error
-        this.http.post(`${this.apiBase}/chronic/submit/`, form).subscribe({
-            next: (saved: any) => {
-                // Refresh local list from backend response
-                const all = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
-                all.push(saved);
-                localStorage.setItem('chronicRequests', JSON.stringify(all));
-                this.chronicRequests.push(saved);
-                this.isSubmitted = true;
-                this.chronic = { medName: '', condition: '', doctor: '', duration: '', files: [] };
-            },
-            error: () => {
-                // Offline fallback: store names only
-                const newRequest = {
-                    id: Date.now(),
-                    patientName: this.currentUser.name,
-                    patientEmail: this.currentUser.email,
-                    medName: this.chronic.medName || 'Chronic Med',
-                    condition: this.chronic.condition || 'General',
-                    doctor: this.chronic.doctor,
-                    duration: this.chronic.duration,
-                    files: this.chronic.files.map((f: File) => f.name),
-                    status: 'Pending',
-                    date: new Date().toLocaleDateString()
-                };
-                const all = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
-                all.push(newRequest);
-                localStorage.setItem('chronicRequests', JSON.stringify(all));
-                this.chronicRequests.push(newRequest);
-                this.isSubmitted = true;
-                this.chronic = { medName: '', condition: '', doctor: '', duration: '', files: [] };
-            }
-        });
+        // Immediately refresh the list shown to the patient
+        this.loadChronicRequests();
+
+        this.isSubmitted = true;
+        this.chronic = { medName: '', condition: '', doctor: '', duration: '', files: [] };
+        this.showToast('Request submitted successfully!', 'success');
     }
 
     activate() {
@@ -430,9 +387,9 @@ login() {
         }
     }
 
-    // ================= TOAST SYSTEM =================
-    showToast(msg: string, type: 'success'|'error'|'warning' = 'success') {
-        const id = ++this.toastCounter;
+    // ================= TOAST =================
+    showToast(msg: string, type: 'success' | 'error' | 'warning' = 'success') {
+        const id   = ++this.toastCounter;
         const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : '!';
         this.toasts.push({ id, msg, type, icon });
         setTimeout(() => this.dismissToast(id), 4500);
@@ -442,13 +399,11 @@ login() {
         this.toasts = this.toasts.filter(t => t.id !== id);
     }
 
-    // ================= CONFIRM DIALOG =================
+    // ================= CONFIRM =================
     showConfirm(message: string): Promise<boolean> {
-        this.confirmMessage = message;
-        this.confirmVisible = true;
-        return new Promise(resolve => {
-            this.confirmResolve = resolve;
-        });
+        this.confirmMessage  = message;
+        this.confirmVisible  = true;
+        return new Promise(resolve => { this.confirmResolve = resolve; });
     }
 
     onConfirmYes() {

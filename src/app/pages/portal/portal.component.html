@@ -28,18 +28,14 @@
 
     <!-- ===== LOGIN VIEW ===== -->
     <div class="auth-box glass" *ngIf="viewState === 'login'" style="max-width: 580px; margin: 0 auto; padding: 3rem; border-radius: 16px;">
-
-        <!-- Tab switcher -->
         <div style="display: flex; background: #f1f5f9; border-radius: 50px; padding: 4px; margin-bottom: 2rem;">
-            <button
-                (click)="loginTab='patient'"
+            <button (click)="loginTab='patient'"
                 [style.background]="loginTab==='patient' ? '#00a76f' : 'transparent'"
                 [style.color]="loginTab==='patient' ? 'white' : '#64748b'"
                 style="flex: 1; padding: 0.6rem; border: none; border-radius: 50px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.3s;">
                 🧑‍⚕️ Patient Login
             </button>
-            <button
-                (click)="loginTab='admin'; adminLoginError=''"
+            <button (click)="loginTab='admin'; adminLoginError=''"
                 [style.background]="loginTab==='admin' ? '#00a76f' : 'transparent'"
                 [style.color]="loginTab==='admin' ? 'white' : '#64748b'"
                 style="flex: 1; padding: 0.6rem; border: none; border-radius: 50px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.3s;">
@@ -47,20 +43,17 @@
             </button>
         </div>
 
-        <!-- Sliding carousel wrapper -->
         <div style="overflow: hidden;">
             <div [style.transform]="loginTab==='patient' ? 'translateX(0)' : 'translateX(-100%)'"
                  style="display: flex; transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);">
 
-                <!-- ── Patient Login Slide ── -->
+                <!-- Patient Login -->
                 <div style="min-width: 100%;">
                     <h2 style="text-align: center; margin-bottom: 0.4rem; color: var(--primary-dark);">Patient Login</h2>
                     <p style="text-align: center; color: var(--text-muted); margin-bottom: 1.75rem; font-size: 0.9rem;">Access your medical records and appointments.</p>
-
                     <div class="form-group" style="margin-bottom: 1rem;">
                         <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Email</label>
-                        <input type="text" [(ngModel)]="loginEmail" class="form-control"
-                            placeholder="xyz@gmail.com"
+                        <input type="text" [(ngModel)]="loginEmail" class="form-control" placeholder="xyz@gmail.com"
                             style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
                     </div>
                     <div class="form-group" style="margin-bottom: 1rem;">
@@ -77,11 +70,10 @@
                     </p>
                 </div>
 
-                <!-- ── Admin Login Slide ── -->
+                <!-- Admin Login -->
                 <div style="min-width: 100%;">
                     <h2 style="text-align: center; margin-bottom: 0.4rem; color: var(--primary-dark);">Admin Login</h2>
                     <p style="text-align: center; color: var(--text-muted); margin-bottom: 1.75rem; font-size: 0.9rem;">Access the hospital management dashboard.</p>
-
                     <div class="form-group" style="margin-bottom: 1rem;">
                         <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Username</label>
                         <input type="text" [(ngModel)]="adminUsername" class="form-control" placeholder="admin"
@@ -98,7 +90,6 @@
                             style="padding: 0.8rem 2.5rem; border-radius: 50px; font-weight: 600; background: #00a76f; border: none; box-shadow: 0 4px 15px rgba(0,167,111,0.2);">Login as Admin</button>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -107,20 +98,17 @@
     <div class="auth-box glass" *ngIf="viewState === 'activation'" style="max-width: 450px; margin: 0 auto; padding: 2.5rem; border-radius: 16px;">
         <h2 style="text-align: center; margin-bottom: 0.5rem; color: var(--primary-dark);">Account Activation</h2>
         <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Please enter the 4-digit activation code.</p>
-        
         <div class="form-group" style="margin-bottom: 1rem;">
             <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Activation Code</label>
-            <input type="text" [(ngModel)]="actCode" class="form-control" placeholder="1234" 
+            <input type="text" [(ngModel)]="actCode" class="form-control" placeholder="1234"
                 style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1.5rem; text-align: center; letter-spacing: 8px;">
         </div>
-
         <div style="text-align: center; margin-top: 1.5rem;">
-            <button class="btn btn-primary" (click)="activate()" 
-                style="padding: 0.8rem 2.5rem; border-radius: 50px; font-weight: 600; background: #00a76f; border: none; box-shadow: 0 4px 15px rgba(0, 167, 111, 0.2); width: 100%;">
+            <button class="btn btn-primary" (click)="activate()"
+                style="padding: 0.8rem 2.5rem; border-radius: 50px; font-weight: 600; background: #00a76f; border: none; box-shadow: 0 4px 15px rgba(0,167,111,0.2); width: 100%;">
                 Activate & Login
             </button>
         </div>
-        
         <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem;">
             Didn't get a code? <a href="javascript:void(0)" (click)="goToRegister()" style="color: var(--primary); font-weight: 600;">Try again</a>
         </p>
@@ -129,68 +117,68 @@
     <!-- ===== REGISTER VIEW ===== -->
     <div class="auth-box glass" *ngIf="viewState === 'register'" style="max-width: 450px; margin: 0 auto; padding: 2.5rem; border-radius: 16px;">
         <h2 style="text-align: center; margin-bottom: 0.5rem; color: var(--primary-dark);">Patient Registration</h2>
-
         <form (ngSubmit)="register()" #registerForm="ngForm">
-        <div class="form-group" style="margin-bottom: 1rem;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">First Name <span style="color:#c62828">*</span></label>
-            <input type="text" name="regFirstName" [(ngModel)]="regFirstName" required class="form-control" placeholder="First Name" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
-        </div>
-
-        <div class="form-group" style="margin-bottom: 1rem;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Last Name <span style="color:#c62828">*</span></label>
-            <input type="text" name="regLastName" [(ngModel)]="regLastName" required class="form-control" placeholder="Last Name" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
-        </div>
-
-        <div class="form-group" style="margin-bottom: 1rem;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Email <span style="color:#c62828">*</span></label>
-            <input type="email" name="regEmail" [(ngModel)]="regEmail" required class="form-control" placeholder="example@mail.com" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
-        </div>
-
-        <div class="form-group mt-3" style="margin-bottom: 1rem;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Phone Number <span style="color:#c62828">*</span></label>
-            <input type="tel" name="regPhone" [(ngModel)]="regPhone" required class="form-control" placeholder="010..." style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
-        </div>
-
-        <div style="display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 1rem; border-radius: 12px; margin: 1.5rem 0;">
-            <div>
-                <label style="display: block; font-weight: 700; color: var(--primary-dark); margin: 0;">Medical Insurance?</label>
-                <small style="color: var(--text-muted);">Do you have a provider?</small>
-            </div>
-            <label class="switch" style="position: relative; display: inline-block; width: 50px; height: 26px;">
-                <input type="checkbox" name="hasInsurance" [(ngModel)]="hasInsurance" style="opacity: 0; width: 0; height: 0;">
-                <span class="slider" [style.background-color]="hasInsurance ? '#00a76f' : '#ccc'" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 34px;">
-                    <span [style.transform]="hasInsurance ? 'translateX(24px)' : 'translateX(0)'" style="position: absolute; content: ''; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; display: inline-block;"></span>
-                </span>
-            </label>
-        </div>
-
-        <div *ngIf="hasInsurance" class="fade-in" style="padding: 1rem; border: 1px dashed #00a76f; border-radius: 12px; margin-bottom: 1.5rem; background: rgba(0, 167, 111, 0.05);">
             <div class="form-group" style="margin-bottom: 1rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Insurance Company</label>
-                <select name="selectedInsuranceCompany" [(ngModel)]="selectedInsuranceCompany" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
-                    <option value="" disabled selected>Select Company</option>
-                    <option *ngFor="let comp of insuranceCompanies" [value]="comp">{{ comp }}</option>
-                </select>
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">First Name <span style="color:#c62828">*</span></label>
+                <input type="text" name="regFirstName" [(ngModel)]="regFirstName" required class="form-control" placeholder="First Name"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
             </div>
-            <div class="form-group">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Insurance ID / Member No.</label>
-                <input type="text" name="insuranceId" [(ngModel)]="insuranceId" class="form-control" placeholder="e.g. 987654321" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Last Name <span style="color:#c62828">*</span></label>
+                <input type="text" name="regLastName" [(ngModel)]="regLastName" required class="form-control" placeholder="Last Name"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
             </div>
-        </div>
-
-        <div class="form-group mt-3" style="margin-bottom: 1.5rem;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Password <span style="color:#c62828">*</span></label>
-            <input type="password" name="regPassword" [(ngModel)]="regPassword" required class="form-control" placeholder="****" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
-        </div>
-
-        <div style="text-align: center;">
-            <button type="submit" class="btn btn-primary"
-                style="display: flex; justify-content: center; align-items: center; padding: 0.8rem 2.5rem; border-radius: 50px; font-weight: 600; background: #00a76f; border: none; box-shadow: 0 4px 15px rgba(0, 167, 111, 0.2); width: 100%; text-align: center;">
-                Create Account
-            </button>
-        </div>
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Email <span style="color:#c62828">*</span></label>
+                <input type="email" name="regEmail" [(ngModel)]="regEmail" required class="form-control" placeholder="example@mail.com"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            </div>
+            <div class="form-group mt-3" style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Phone Number <span style="color:#c62828">*</span></label>
+                <input type="tel" name="regPhone" [(ngModel)]="regPhone" required class="form-control" placeholder="010..."
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 1rem; border-radius: 12px; margin: 1.5rem 0;">
+                <div>
+                    <label style="display: block; font-weight: 700; color: var(--primary-dark); margin: 0;">Medical Insurance?</label>
+                    <small style="color: var(--text-muted);">Do you have a provider?</small>
+                </div>
+                <label class="switch" style="position: relative; display: inline-block; width: 50px; height: 26px;">
+                    <input type="checkbox" name="hasInsurance" [(ngModel)]="hasInsurance" style="opacity: 0; width: 0; height: 0;">
+                    <span class="slider" [style.background-color]="hasInsurance ? '#00a76f' : '#ccc'"
+                        style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 34px;">
+                        <span [style.transform]="hasInsurance ? 'translateX(24px)' : 'translateX(0)'"
+                            style="position: absolute; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; display: inline-block;"></span>
+                    </span>
+                </label>
+            </div>
+            <div *ngIf="hasInsurance" class="fade-in" style="padding: 1rem; border: 1px dashed #00a76f; border-radius: 12px; margin-bottom: 1.5rem; background: rgba(0,167,111,0.05);">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Insurance Company</label>
+                    <select name="selectedInsuranceCompany" [(ngModel)]="selectedInsuranceCompany" class="form-control"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                        <option value="" disabled selected>Select Company</option>
+                        <option *ngFor="let comp of insuranceCompanies" [value]="comp">{{ comp }}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Insurance ID / Member No.</label>
+                    <input type="text" name="insuranceId" [(ngModel)]="insuranceId" class="form-control" placeholder="e.g. 987654321"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                </div>
+            </div>
+            <div class="form-group mt-3" style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Password <span style="color:#c62828">*</span></label>
+                <input type="password" name="regPassword" [(ngModel)]="regPassword" required class="form-control" placeholder="****"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            </div>
+            <div style="text-align: center;">
+                <button type="submit" class="btn btn-primary"
+                    style="display: flex; justify-content: center; align-items: center; padding: 0.8rem 2.5rem; border-radius: 50px; font-weight: 600; background: #00a76f; border: none; box-shadow: 0 4px 15px rgba(0,167,111,0.2); width: 100%;">
+                    Create Account
+                </button>
+            </div>
         </form>
-        
         <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem;">
             Already have an account? <a href="javascript:void(0)" (click)="goToLogin()" style="color: var(--primary); font-weight: 600;">Login here</a>
         </p>
@@ -204,46 +192,48 @@
                 <h4 style="margin: 0; color: var(--primary-dark);">{{ currentUser?.name }}</h4>
             </div>
             <nav class="portal-nav" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <a href="javascript:void(0)" [class.active]="activeTab === 'dashboard'" (click)="setActiveTab('dashboard')" style="padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                <a href="javascript:void(0)" [class.active]="activeTab === 'dashboard'" (click)="setActiveTab('dashboard')"
+                    style="padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
                     <i data-lucide="layout-dashboard" style="width: 18px;"></i> Dashboard
                 </a>
-                <a href="javascript:void(0)" [class.active]="activeTab === 'labs'" (click)="setActiveTab('labs')" style="padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                <a href="javascript:void(0)" [class.active]="activeTab === 'labs'" (click)="setActiveTab('labs')"
+                    style="padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
                     <i data-lucide="test-tube" style="width: 18px;"></i> Lab Results
                 </a>
-                <a href="javascript:void(0)" [class.active]="activeTab === 'imaging'" (click)="setActiveTab('imaging')" style="padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                <a href="javascript:void(0)" [class.active]="activeTab === 'imaging'" (click)="setActiveTab('imaging')"
+                    style="padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
                     <i data-lucide="scan" style="width: 18px;"></i> Imaging & X-Rays
                 </a>
-                <a href="javascript:void(0)" [class.active]="activeTab === 'appointments'" (click)="setActiveTab('appointments')" style="padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                <a href="javascript:void(0)" [class.active]="activeTab === 'appointments'" (click)="setActiveTab('appointments')"
+                    style="padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
                     <i data-lucide="calendar" style="width: 18px;"></i> My Reservations
                 </a>
-                <a href="javascript:void(0)" 
-                   [class.active]="activeTab === 'chronic'" 
-                   (click)="setActiveTab('chronic')"
-                   style="padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                <a href="javascript:void(0)" [class.active]="activeTab === 'chronic'" (click)="setActiveTab('chronic')"
+                    style="padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
                     <i data-lucide="pill" style="width: 18px;"></i> Chronic Medication
                 </a>
                 <hr style="margin: 1rem 0; opacity: 0.1;">
-                <a href="javascript:void(0)" (click)="logout()" style="padding: 0.75rem 1rem; border-radius: 8px; color: #ef4444; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                <a href="javascript:void(0)" (click)="logout()"
+                    style="padding: 0.75rem 1rem; border-radius: 8px; color: #ef4444; font-weight: 600; display: flex; align-items: center; gap: 10px;">
                     <i data-lucide="log-out" style="width: 18px;"></i> Logout
                 </a>
             </nav>
         </aside>
 
         <main class="portal-main" id="portal-main">
-            <!-- DASHBOARD TAB -->
-           <div *ngIf="activeTab === 'dashboard'" class="fade-in">
-    <div class="portal-header" style="margin-bottom: 2rem;">
-        <h1>Welcome Back, <span class="highlight">{{ currentUser?.name.split(' ')[0] }}</span></h1>
-        <p>Overview of your health record and status.</p>
-    </div>
-    
 
-                <!-- PROFILE INFO -->
+            <!-- DASHBOARD TAB -->
+            <div *ngIf="activeTab === 'dashboard'" class="fade-in">
+                <div class="portal-header" style="margin-bottom: 2rem;">
+                    <h1>Welcome Back, <span class="highlight">{{ currentUser?.name.split(' ')[0] }}</span></h1>
+                    <p>Overview of your health record and status.</p>
+                </div>
+
                 <div class="profile-card glass mb-4" style="padding: 1.5rem; border-radius: 16px; margin-bottom: 2rem; border-left: 4px solid var(--primary);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <h3 style="margin-bottom: 0.5rem; color: var(--primary-dark);">Insurance Profile</h3>
-                            <p style="margin:0; color: var(--text-muted);">Status: 
+                            <p style="margin:0; color: var(--text-muted);">Status:
                                 <span *ngIf="uploadSuccess" style="color: var(--green); font-weight: 700;">Verified (ID: {{ insuranceFile }})</span>
                                 <span *ngIf="!uploadSuccess" style="color: var(--orange); font-weight: 700;">Not Uploaded</span>
                             </p>
@@ -256,7 +246,6 @@
                     </div>
                 </div>
 
-                <!-- QUICK STATS -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
                     <div class="glass-stat" (click)="setActiveTab('appointments')" style="padding: 1.5rem; border-radius: 16px; cursor: pointer;">
                         <i data-lucide="calendar-check" style="color: var(--primary); margin-bottom: 10px;"></i>
@@ -275,7 +264,8 @@
                     </div>
                 </div>
                 <div style="margin-top: 8rem; text-align: center; padding-bottom: 3rem;">
-                    <button class="btn btn-primary btn-sm" routerLink="/appointment" style="padding: 0.6rem 2.2rem; border-radius: 50px; font-size: 0.85rem;">Book New Appointment</button>
+                    <button class="btn btn-primary btn-sm" routerLink="/appointment"
+                        style="padding: 0.6rem 2.2rem; border-radius: 50px; font-size: 0.85rem;">Book New Appointment</button>
                 </div>
             </div>
 
@@ -285,7 +275,6 @@
                     <h2 style="color: var(--primary-dark);">Laboratory Results</h2>
                     <p style="color: var(--text-muted);">View your recent lab tests and diagnostics.</p>
                 </div>
-
                 <div class="records-table glass" style="padding: 1.5rem; border-radius: 16px;">
                     <div class="table-responsive">
                         <table style="width: 100%; border-collapse: collapse;">
@@ -320,9 +309,9 @@
                     <h2 style="color: var(--primary-dark);">Imaging & X-Rays</h2>
                     <p style="color: var(--text-muted);">Access your scans, X-rays, and imaging findings.</p>
                 </div>
-
                 <div style="display: grid; gap: 1.5rem;">
-                    <div *ngFor="let img of imagingRecords" class="glass" style="padding: 1.5rem; border-radius: 16px; display: flex; gap: 1.5rem; border-left: 4px solid var(--orange);">
+                    <div *ngFor="let img of imagingRecords" class="glass"
+                        style="padding: 1.5rem; border-radius: 16px; display: flex; gap: 1.5rem; border-left: 4px solid var(--orange);">
                         <div style="background: #fff7ed; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                             <i data-lucide="image" style="color: var(--orange);"></i>
                         </div>
@@ -349,7 +338,6 @@
                     </div>
                     <button class="btn btn-primary btn-sm" routerLink="/appointment" style="padding: 0.6rem 1.2rem;">Book New</button>
                 </div>
-
                 <div class="records-table glass" style="padding: 1.5rem; border-radius: 16px;">
                     <div class="table-responsive">
                         <table style="width: 100%; border-collapse: collapse;">
@@ -386,9 +374,9 @@
                 </div>
             </div>
 
-            <!-- CHRONIC MEDICATION TAB -->
+            <!-- ===== CHRONIC MEDICATION TAB ===== -->
             <div *ngIf="activeTab === 'chronic'" class="fade-in">
-    
+
                 <div class="portal-header" style="margin-bottom: 2rem;">
                     <h2 style="color: var(--primary-dark);">Chronic Medication Request</h2>
                     <p style="color: var(--text-muted);">Apply for recurring medication approvals and manage your prescriptions.</p>
@@ -396,16 +384,18 @@
 
                 <div class="glass" style="padding: 1.5rem; border-radius: 16px;">
 
-                    <!-- Upload -->
+                    <!-- Upload: Medical Report -->
                     <div style="margin-bottom: 1.5rem;">
-                        <label style="font-weight: 600;">Upload Documents</label>
+                        <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Upload Medical Report</label>
                         <input type="file" (change)="onChronicFileSelect($event)" multiple>
                         <ul style="margin-top:10px; color: var(--text-muted); font-size: 0.9rem;">
                             <li>✔ Medical report</li>
                         </ul>
                     </div>
+
+                    <!-- Upload: Doctor Prescription -->
                     <div style="margin-bottom: 1.5rem;">
-                        <label style="font-weight: 600;">Upload Documents</label>
+                        <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Upload Doctor Prescription</label>
                         <input type="file" (change)="onChronicFileSelect($event)" multiple>
                         <ul style="margin-top:10px; color: var(--text-muted); font-size: 0.9rem;">
                             <li>✔ Doctor prescription</li>
@@ -414,7 +404,7 @@
 
                     <div class="glass" style="padding: 1.5rem; border-radius: 16px;">
                         <div *ngIf="!isSubmitted">
-                            <button class="btn btn-primary" (click)="submitChronicRequest()" 
+                            <button class="btn btn-primary" (click)="submitChronicRequest()"
                                 style="width: 100%; padding: 0.8rem; border-radius: 50px;">
                                 Submit Request
                             </button>
@@ -433,23 +423,42 @@
                     </div>
                 </div>
 
-                <!-- Previous Requests -->
+                <!-- ===== PREVIOUS REQUESTS — status read live from localStorage ===== -->
                 <div class="glass mt-4" style="padding: 1.5rem; border-radius: 16px; margin-top: 2rem;">
                     <h4 style="margin-bottom: 1rem;">Previous Requests</h4>
-                    <div *ngFor="let req of chronicRequests" style="padding: 1rem; border-bottom: 1px solid #eee;">
-                        <strong>{{ req.medName }}</strong> - {{ req.condition }}
-                        <span style="float:right; font-weight:600;"
-                              [style.color]="req.status === 'Approved' ? 'green' : 'orange'">
+
+                    <div *ngFor="let req of chronicRequests"
+                         style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 0.5rem;">
+
+                        <!-- Left: request info -->
+                        <div>
+                            <strong style="display: block;">{{ req.medName }}</strong>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">{{ req.condition }}</span>
+                            <span *ngIf="req.date" style="font-size: 0.8rem; color: var(--text-muted); display: block;">{{ req.date }}</span>
+                        </div>
+
+                        <!-- Right: status badge — colour driven by admin's value in localStorage -->
+                        <span
+                            style="padding: 4px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; white-space: nowrap;"
+                            [ngStyle]="{
+                                'background': req.status === 'Approved'  ? '#d1fae5' :
+                                              req.status === 'Rejected'  ? '#fee2e2' : '#fef3c7',
+                                'color':      req.status === 'Approved'  ? '#065f46' :
+                                              req.status === 'Rejected'  ? '#b91c1c' : '#92400e'
+                            }">
                             {{ req.status }}
                         </span>
                     </div>
-                    <div *ngIf="chronicRequests.length === 0" style="text-align:center; color: var(--text-muted); padding: 1rem;">
+
+                    <div *ngIf="chronicRequests.length === 0" style="text-align: center; color: var(--text-muted); padding: 1rem;">
                         No requests submitted yet.
                     </div>
                 </div>
 
-            </div>
+            </div><!-- end chronic tab -->
+
         </main>
-    </div>
+    </div><!-- end dashboard grid -->
+
     </div>
 </section>

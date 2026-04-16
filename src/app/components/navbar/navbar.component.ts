@@ -15,8 +15,8 @@ declare var lucide: any;
 })
 export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
   isMenuOpen = false;
-  isLoggedIn = false;
-  isAdmin = false;
+  isLoggedIn = false; // Refers to Patient login
+  isAdmin = false;    // Refers to Admin login
   currentUser: any = null;
   private authSub!: Subscription;
   private routerSub!: Subscription;
@@ -28,73 +28,60 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    // Initial check
     this.syncState();
 
-    // Re-sync whenever patient auth state changes
+    // Listen for Patient Auth changes
     this.authSub = this.authService.isLoggedIn$.subscribe((status: boolean) => {
-      this.isLoggedIn = status;
-      this.currentUser = status ? this.authService.getCurrentUser() : null;
-      // Re-read sessionStorage — saveSession() already cleared it if a patient just logged in
-      this.isAdmin = sessionStorage.getItem('isAdminLoggedIn') === 'true';
+      this.syncState();
       this.cdr.detectChanges();
     });
 
-    // Re-check admin state on every route change as a safety net.
-    // This catches edge cases where sessionStorage changes without triggering isLoggedIn$.
+    // Re-check state on navigation
     this.routerSub = this.router.events
       .pipe(filter(e => e instanceof NavigationEnd))
       .subscribe(() => {
-        const wasAdmin = this.isAdmin;
         this.syncState();
-        if (wasAdmin !== this.isAdmin) {
-          this.cdr.detectChanges();
-        }
+        this.cdr.detectChanges();
+        // Refresh icons after navigation
+        setTimeout(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); }, 100);
       });
   }
 
-  /** Read both localStorage (patient) and sessionStorage (admin) atomically */
   private syncState() {
     this.isAdmin = sessionStorage.getItem('isAdminLoggedIn') === 'true';
     this.isLoggedIn = this.authService.isLoggedIn();
     this.currentUser = this.isLoggedIn ? this.authService.getCurrentUser() : null;
 
-    // Guard: if somehow both are true, patient takes no precedence —
-    // instead we trust that saveSession() already cleared admin session,
-    // so if isAdmin is still true here, a real admin IS active.
-    // If isLoggedIn is also true, that means stale localStorage — clear it.
-    if (this.isAdmin && this.isLoggedIn) {
-      // Admin session wins; patient localStorage was left from a previous session
-      this.authService.clearSession();
-      this.isLoggedIn = false;
-      this.currentUser = null;
+    // Logic: If Admin is logged in, we treat the view as Guest+Admin 
+    // and ignore the Patient specific navbar links.
+    if (this.isAdmin) {
+      // We keep isLoggedIn true for the service but UI logic will use !isPatient
     }
   }
 
-  ngAfterViewInit(): void {
-    setTimeout(() => {
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-    }, 100);
-  }
-
-  ngOnDestroy() {
-    this.authSub?.unsubscribe();
-    this.routerSub?.unsubscribe();
-  }
-
   get isPatient(): boolean {
-    return this.isLoggedIn && !this.isAdmin && !this.currentUser?.username;
+    // A user is a patient ONLY if logged in AND not an admin
+    return this.isLoggedIn && !this.isAdmin;
   }
 
   logout() {
     if (this.isAdmin) {
       sessionStorage.removeItem('isAdminLoggedIn');
       this.isAdmin = false;
-      this.cdr.detectChanges();
-      this.router.navigate(['/']);
     } else {
-      this.authService.clearSession(); // this also clears sessionStorage now
+      this.authService.clearSession();
     }
     this.isMenuOpen = false;
+    this.router.navigate(['/']);
+    this.cdr.detectChanges();
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); }, 100);
+  }
+
+  ngOnDestroy() {
+    this.authSub?.unsubscribe();
+    this.routerSub?.unsubscribe();
   }
 }

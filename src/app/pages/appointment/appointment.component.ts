@@ -6,10 +6,13 @@ import { HttpClient } from '@angular/common/http';
 import { switchMap, tap } from 'rxjs/operators';
 import { DoctorService, Doctor } from '../../services/doctor.service';
 import { environment } from '../../../environments/environment';
+import { Router } from '@angular/router';
+
 
 declare var lucide: any;
 
 @Component({
+    
     selector: 'app-appointment',
     standalone: true,
     imports: [CommonModule, FormsModule, RouterLink],
@@ -17,6 +20,7 @@ declare var lucide: any;
     styleUrls: ['./appointment.component.scss']
 })
 export class AppointmentComponent implements OnInit {
+    
     doctors: Doctor[] = [];
     selectedDoctor: Doctor | null = null;
 
@@ -56,10 +60,12 @@ export class AppointmentComponent implements OnInit {
     };
 
     constructor(
+        
         private route: ActivatedRoute,
         private doctorService: DoctorService,
         private http: HttpClient,
-        private cdr: ChangeDetectorRef
+        private cdr: ChangeDetectorRef,
+        private router: Router
     ) {}
 
     ngOnInit() {
@@ -76,7 +82,6 @@ export class AppointmentComponent implements OnInit {
         this.doctorService.getDoctorsFromApi().pipe(
             tap((doctors) => {
                 this.doctors = doctors.length ? doctors : this.doctorService.getDoctors();
-                // Force re-render so specialty dropdown + doctor list populate immediately
                 this.cdr.detectChanges();
             }),
             switchMap(() => this.route.queryParams)
@@ -120,42 +125,50 @@ export class AppointmentComponent implements OnInit {
         this.reinitIcons();
     }
 
-    confirmBooking() {
-        if (this.isSubmitting || !this.selectedDoctor) return;
-        this.isSubmitting = true;
+confirmBooking() {
+    
+    if (this.isSubmitting || !this.selectedDoctor) return;
+    this.isSubmitting = true;
 
-        const dateStr = this.bookingData.date || new Date().toISOString().slice(0, 10);
-        const patientName = this.getPatientFullName();
-        const payload = {
-            doctorName: this.selectedDoctor.name,
-            patientName,
-            patientPhone: this.bookingData.phone,
-            date: dateStr,
-            id: this.ref,
-            reason: this.bookingData.reason || ''
-        };
+    const dateStr = this.bookingData.date || new Date().toISOString().slice(0, 10);
+    const patientName = this.getPatientFullName();
 
-        // Save locally and advance UI immediately — never block on the API
-        this.afterBookingSaved();
+    const payload = {
+        doctorName: this.selectedDoctor.name,
+        patientName,
+        patientPhone: this.bookingData.phone,
+        date: dateStr,
+        id: this.ref,
+        reason: this.bookingData.reason || ''
+    };
 
-        // Fire-and-forget: sync to backend in background
-        this.http.post<{ message?: string }>(`${environment.apiUrl}/appointments/create/`, payload)
-            .subscribe({ next: () => {}, error: () => {} });
-    }
+    this.http.post(`${environment.apiUrl}/appointments/create/`, payload)
+        .subscribe({
+            next: () => {
+
+                this.isSubmitting = false;
+                this.bookingState = 'success';
+
+                // 🔥 مهم جدًا: بعد 1.5 ثانية نرجع للـ portal
+                setTimeout(() => {
+                    this.router.navigate(['/portal'], {
+                        queryParams: { refresh: Date.now() }
+                    });
+                }, 1500);
+
+                this.reinitIcons();
+            },
+            error: (err) => {
+                console.error(err);
+                this.isSubmitting = false;
+                alert('حدث خطأ أثناء الحجز');
+            }
+        });
+}
 
     private afterBookingSaved() {
-        const appointments = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
-        appointments.push({
-            id: this.ref,
-            doctorName: this.selectedDoctor?.name,
-            specialty: this.selectedDoctor?.specialty,
-            patientName: this.getPatientFullName(),
-            patientPhone: this.bookingData.phone,
-            date: this.bookingData.date || new Date().toLocaleDateString(),
-            reason: this.bookingData.reason,
-            status: 'Confirmed'
-        });
-        localStorage.setItem('patientAppointments', JSON.stringify(appointments));
+        // بدلاً من إضافة الموعد يدوياً، يفضل في صفحة Portal عمل Get للمواعيد من السيرفر مباشرة
+        // لضمان أنه في حال حذف الأدمن للموعد، يختفي من عند المستخدم.
         this.bookingState = 'success';
         this.isSubmitting = false;
         this.reinitIcons();

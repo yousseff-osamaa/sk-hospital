@@ -16,6 +16,7 @@ declare var lucide: any;
     styleUrls: ['./portal.component.scss']
 })
 export class PatientPortalComponent implements OnInit, AfterViewInit {
+onImageSelected: any;
 
     constructor(private authService: AuthService, private router: Router, private zone: NgZone, private http: HttpClient) {}
 
@@ -32,7 +33,7 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
     regPassword: string = '';
 
     // Single full-name login field
-    loginFullName = '';
+    loginEmail = '';
     loginPassword = '';
 
     adminUsername = '';
@@ -99,48 +100,74 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
 
     // =====================================================
 
-    ngOnInit() {
+  
+ngOnInit() {
         const usr = localStorage.getItem('currentUser');
         if (usr) {
             const parsedUser = JSON.parse(usr);
-            // Admin users have a `username` field — send them straight to /admin
+            
+            // إذا كان المستخدم Admin
             if (parsedUser?.username) {
                 this.router.navigate(['/admin']);
                 return;
             }
-            this.currentUser = parsedUser;
-            this.viewState = 'dashboard';
-            this.loadPatientData();
-        }
 
+            // إذا كان Patient مسجل دخول بالفعل:
+            this.currentUser = parsedUser;
+            
+            // التحقق من المسار الحالي:
+            // إذا كان المستخدم في صفحة البورتال، نعرض له الداشبورد والبيانات
+            if (this.router.url.includes('portal')) {
+                this.viewState = 'dashboard';
+                this.loadPatientData();
+            }
+        }
+        // تحميل طلبات الأدوية
         const allChronic = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
         this.chronicRequests = allChronic.filter((r: any) =>
             r.patientEmail === this.currentUser?.email
         );
     }
+    // loadPatientData() {
+    //     if (!this.currentUser) return;
 
-    loadPatientData() {
-        if (!this.currentUser) return;
+    //     const allAppointments = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
+    //     this.myAppointments = allAppointments.filter((a: any) => a.patientPhone === this.currentUser.phone);
 
-        const allAppointments = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
-        this.myAppointments = allAppointments.filter((a: any) => a.patientPhone === this.currentUser.phone);
+    //     this.labResults = [
+    //         { date: '2026-03-15', name: 'CBC', result: 'Normal', status: 'Final' },
+    //         { date: '2026-03-15', name: 'Lipid Profile', result: 'High Cholesterol', status: 'Final' }
+    //     ];
 
-        this.labResults = [
-            { date: '2026-03-15', name: 'CBC', result: 'Normal', status: 'Final' },
-            { date: '2026-03-15', name: 'Lipid Profile', result: 'High Cholesterol', status: 'Final' }
-        ];
+    //     this.imagingRecords = [
+    //         { date: '2026-03-12', type: 'Chest X-Ray', findings: 'Normal', id: 'XR-7721' }
+    //     ];
 
-        this.imagingRecords = [
-            { date: '2026-03-12', type: 'Chest X-Ray', findings: 'Normal', id: 'XR-7721' }
-        ];
+    //     if (this.currentUser.insuranceIdFile) {
+    //         this.insuranceFile = this.currentUser.insuranceIdFile;
+    //         this.uploadSuccess = true;
+    //     }
 
-        if (this.currentUser.insuranceIdFile) {
-            this.insuranceFile = this.currentUser.insuranceIdFile;
-            this.uploadSuccess = true;
+    //     setTimeout(() => { if (lucide) lucide.createIcons(); }, 100);
+    // }
+   
+   loadPatientData() {
+    this.http.get<any[]>(`${this.apiBase}/appointments/`).subscribe({
+        next: (data) => {
+            console.log("🔥 RAW BACKEND DATA:", data);
+
+            console.log("🔥 FIRST ITEM:", data[0]);
+
+          this.myAppointments = data.map(a => ({
+    doctorName: a.doctorName || a.doctor_name || a.doctor,
+    specialty: a.specialty || a.doctor_specialty,
+    date: a.date || a.appointment_date,
+    status: a.status || 'Pending',
+    id: a.id
+}));
         }
-
-        setTimeout(() => { if (lucide) lucide.createIcons(); }, 100);
-    }
+    });
+}
 
     setActiveTab(tab: any) {
         this.activeTab = tab;
@@ -164,17 +191,30 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
     goToRegister() { this.viewState = 'register'; }
     goToLogin() { this.viewState = 'login'; this.loginTab = 'patient'; }
 
-    loginAdmin() {
-        this.adminLoginError = '';
-        if (this.adminUsername === 'admin' && this.adminPassword === 'admin123') {
-            // Admin state lives ONLY in sessionStorage — never write to localStorage
-            // so the patient portal can't mistake the admin for a logged-in patient
-            sessionStorage.setItem('isAdminLoggedIn', 'true');
-            this.router.navigate(['/admin']);
-        } else {
-            this.adminLoginError = 'Invalid username or password';
-        }
+loginAdmin() {
+    this.adminLoginError = '';
+    
+    // Check credentials
+    if (this.adminUsername === 'admin' && this.adminPassword === 'admin123') {
+        // 1. Set the admin session
+        sessionStorage.setItem('isAdminLoggedIn', 'true');
+        
+        // 2. Clear any existing patient data to avoid conflicts
+        localStorage.removeItem('currentUser'); 
+
+        // 3. Open the admin dashboard in a new tab
+        const url = this.router.serializeUrl(
+            this.router.createUrlTree(['/admin'])
+        );
+        window.open(url, '_blank');
+
+        // Optional: Reset login fields after opening
+        this.adminUsername = '';
+        this.adminPassword = '';
+    } else {
+        this.adminLoginError = 'Invalid username or password';
     }
+}
 
     private readProfiles(): any[] {
         return JSON.parse(localStorage.getItem('portalProfiles') || '[]');
@@ -240,61 +280,70 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
             }
         });
     }
+login() {
+    const email = this.loginEmail.trim().toLowerCase();
+    const password = this.loginPassword;
 
-    login() {
-        // Parse full name: "First Last" split by first space
-        const full = this.loginFullName.trim();
-        if (!full || !this.loginPassword) {
-            this.showToast('Please enter your full name and password.', 'warning');
-            return;
-        }
-        const spaceIdx = full.indexOf(' ');
-        const first = spaceIdx > -1 ? full.substring(0, spaceIdx).toLowerCase() : full.toLowerCase();
-        const last = spaceIdx > -1 ? full.substring(spaceIdx + 1).trim().toLowerCase() : '';
-
-        const profile = this.readProfiles().find(
-            (p: any) =>
-                (p.firstName ?? '').trim().toLowerCase() === first &&
-                (last ? (p.lastName ?? '').trim().toLowerCase() === last : true)
-        );
-        if (!profile?.email) {
-            this.showToast('Account not found. Please register first.', 'error');
-            return;
-        }
-
-        this.authService.login(profile.email, this.loginPassword).subscribe({
-            next: (tokens) => {
-                const userData = {
-                    name: `${profile.firstName} ${profile.lastName}`.trim(),
-                    email: profile.email,
-                    phone: profile.phone ?? '',
-                };
-                this.authService.saveSession(tokens, userData);
-                this.currentUser = userData;
-                this.viewState = 'dashboard';
-                this.loadPatientData();
-            },
-            error: () => this.showToast('Invalid name or password.', 'error')
-        });
+    if (!email || !password) {
+        this.showToast('Please enter your email and password.', 'warning');
+        return;
     }
+
+    const profiles = this.readProfiles();
+    const profile = profiles.find(p => p.email.toLowerCase() === email);
+
+    if (!profile) {
+        this.showToast('Account not found. Please register first.', 'error');
+        return;
+    }
+
+    this.authService.login(email, password).subscribe({
+        next: (tokens) => {
+            const userData = {
+                name: `${profile.firstName} ${profile.lastName}`.trim(),
+                email: profile.email,
+                phone: profile.phone ?? '',
+            };
+            
+            // حفظ الجلسة في localStorage
+            this.authService.saveSession(tokens, userData);
+            this.currentUser = userData;
+            
+            this.showToast('Login successful!', 'success');
+
+            // --- التوجيه إلى الصفحة الرئيسية ---
+            this.router.navigate(['/home']); 
+        },
+        error: (err) => {
+            this.showToast('Invalid email or password.', 'error');
+        }
+    });
+}
 
     logout() {
         this.authService.clearSession();
         this.currentUser = null;
         this.viewState = 'login';
     }
+   cancelAppointment(appt: any) {
+    this.showConfirm('Cancel this appointment?').then(ok => {
+        this.zone.run(() => {
+            if (!ok) return;
 
-    cancelAppointment(appt: any) {
-        this.showConfirm('Cancel this appointment?').then(ok => {
-            this.zone.run(() => {
-                if (!ok) return;
-                const all = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
-                localStorage.setItem('patientAppointments', JSON.stringify(all.filter((a: any) => a.id !== appt.id)));
-                this.myAppointments = this.myAppointments.filter((a: any) => a.id !== appt.id);
-                this.showToast('Appointment cancelled.', 'success');
+            this.http.delete(`${this.apiBase}/appointments/${appt.id}/delete/`).subscribe({
+                next: () => {
+                    // بعد الحذف من السيرفر → نعمل refresh
+                    this.loadPatientData();
+
+                    this.showToast('Appointment cancelled.', 'success');
+                },
+                error: () => {
+                    this.showToast('Failed to cancel appointment.', 'error');
+                }
             });
         });
-    }
+    });
+}
 
     // ================= INSURANCE =================
     onFileSelect(event: any) {

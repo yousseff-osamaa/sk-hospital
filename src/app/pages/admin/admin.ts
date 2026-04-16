@@ -111,6 +111,19 @@ export class Admin implements OnInit {
   // ---- Appointment filter ----
   apptSearchDoctor = '';
   apptFilterSpecialty = '';
+onImageSelected(event: any) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    this.currentEvent.image = reader.result as string; 
+  };
+
+  reader.readAsDataURL(file);
+}
+
   get specialties(): string[] {
     const s = new Set(this.doctors.map(d => d.specialty).filter(Boolean));
     return Array.from(s);
@@ -490,18 +503,22 @@ export class Admin implements OnInit {
   }
 
   saveEvent() {
+    const payload = {
+  ...this.currentEvent,
+  image: this.currentEvent.image
+};
     const editing = this.currentEvent.id != null && this.currentEvent.id !== '';
     const finish = () => {
       this.loadAdminEvents();
       this.showEventModal = false;
       this.showToast(editing ? 'Event updated!' : 'Event added!', 'success');
     };
-    if (editing) {
-      const id = Number(this.currentEvent.id);
-      this.eventsService.updateEvent(id, this.currentEvent).subscribe({ next: finish });
-    } else {
-      this.eventsService.createEvent(this.currentEvent).subscribe({ next: finish });
-    }
+   if (editing) {
+  const id = Number(this.currentEvent.id);
+  this.eventsService.updateEvent(id, payload).subscribe({ next: finish });
+} else {
+  this.eventsService.createEvent(payload).subscribe({ next: finish });
+}
   }
 
   deleteEvent(id: number) {

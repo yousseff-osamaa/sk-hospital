@@ -384,23 +384,25 @@
 
                 <div class="glass" style="padding: 1.5rem; border-radius: 16px;">
 
-                    <!-- Upload: Medical Report -->
-                    <div style="margin-bottom: 1.5rem;">
-                        <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Upload Medical Report</label>
-                        <input type="file" (change)="onChronicFileSelect($event)" multiple>
-                        <ul style="margin-top:10px; color: var(--text-muted); font-size: 0.9rem;">
-                            <li>✔ Medical report</li>
-                        </ul>
-                    </div>
+                  <!-- Upload: Medical Report -->
+<div style="margin-bottom: 1.5rem;">
+    <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Upload Medical Report</label>
+    <input type="file" (change)="onChronicFileSelect($event, 'report')" multiple
+        accept="image/*,.pdf">
+    <ul style="margin-top:10px; color: var(--text-muted); font-size: 0.9rem;">
+        <li>✔ Medical report</li>
+    </ul>
+</div>
 
-                    <!-- Upload: Doctor Prescription -->
-                    <div style="margin-bottom: 1.5rem;">
-                        <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Upload Doctor Prescription</label>
-                        <input type="file" (change)="onChronicFileSelect($event)" multiple>
-                        <ul style="margin-top:10px; color: var(--text-muted); font-size: 0.9rem;">
-                            <li>✔ Doctor prescription</li>
-                        </ul>
-                    </div>
+<!-- Upload: Doctor Prescription -->
+<div style="margin-bottom: 1.5rem;">
+    <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Upload Doctor Prescription</label>
+    <input type="file" (change)="onChronicFileSelect($event, 'prescription')" multiple
+        accept="image/*,.pdf">
+    <ul style="margin-top:10px; color: var(--text-muted); font-size: 0.9rem;">
+        <li>✔ Doctor prescription</li>
+    </ul>
+</div>
 
                     <div class="glass" style="padding: 1.5rem; border-radius: 16px;">
                         <div *ngIf="!isSubmitted">
@@ -430,35 +432,48 @@
                     <div *ngFor="let req of chronicRequests"
                          style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 0.5rem;">
 
-                        <!-- Left: request info -->
+                       <!-- Left: request info -->
                         <div>
                             <strong style="display: block;">{{ req.medName }}</strong>
                             <span style="font-size: 0.85rem; color: var(--text-muted);">{{ req.condition }}</span>
                             <span *ngIf="req.date" style="font-size: 0.8rem; color: var(--text-muted); display: block;">{{ req.date }}</span>
                         </div>
 
-                        <!-- Right: status badge — colour driven by admin's value in localStorage -->
-                        <span
-                            style="padding: 4px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; white-space: nowrap;"
-                            [ngStyle]="{
-                                'background': req.status === 'Approved'  ? '#d1fae5' :
-                                              req.status === 'Rejected'  ? '#fee2e2' : '#fef3c7',
-                                'color':      req.status === 'Approved'  ? '#065f46' :
-                                              req.status === 'Rejected'  ? '#b91c1c' : '#92400e'
-                            }">
-                            {{ req.status }}
-                        </span>
-                    </div>
+                        <!-- Right: status badge + contextual message -->
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                            <span
+                                style="padding: 4px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; white-space: nowrap;"
+                                [ngStyle]="{
+                                    'background': req.status === 'Approved'  ? '#d1fae5' :
+                                                  req.status === 'Rejected'  ? '#fee2e2' : '#fef3c7',
+                                    'color':      req.status === 'Approved'  ? '#065f46' :
+                                                  req.status === 'Rejected'  ? '#b91c1c' : '#92400e'
+                                }">
+                                {{ req.status }}
+                            </span>
+
+                            <small *ngIf="req.status === 'Approved'" style="color: #065f46; font-size: 0.78rem;">
+                                ✅ You may collect your medication at the pharmacy.
+                            </small>
+                            <small *ngIf="req.status === 'Rejected'" style="color: #b91c1c; font-size: 0.78rem;">
+                                ❌ Please contact the clinic for more information.
+                            </small>
+                            <small *ngIf="req.status === 'Pending'" style="color: #92400e; font-size: 0.78rem;">
+                                ⏳ Awaiting admin review.
+                            </small>
+                        </div>
+
+                    </div><!-- ← closes *ngFor row -->
 
                     <div *ngIf="chronicRequests.length === 0" style="text-align: center; color: var(--text-muted); padding: 1rem;">
                         No requests submitted yet.
                     </div>
-                </div>
 
-            </div><!-- end chronic tab -->
+                </div><!-- ← closes "Previous Requests" glass container -->
+
+            </div><!-- ← closes chronic tab -->
 
         </main>
     </div><!-- end dashboard grid -->
-
-    </div>
+</div>
 </section>

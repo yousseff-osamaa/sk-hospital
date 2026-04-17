@@ -258,35 +258,37 @@ onImageSelected(event: any) {
     this.cdr.detectChanges();
   }
 
-  loadChronicRequests() {
-    this.http.get<any[]>(`${this.apiBase}/chronic/`).subscribe({
-      next: (data) => { this.chronicRequests = data; this.cdr.detectChanges(); },
-      error: () => {
-        // Fallback to localStorage if backend is unavailable
-        this.chronicRequests = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
-        this.cdr.detectChanges();
-      }
-    });
-  }
 
-  updateChronicStatus(req: any, newStatus: string) {
-    if (req.id && typeof req.id === 'number') {
-      // Backend request — use API
-      this.http.patch(`${this.apiBase}/chronic/${req.id}/status/`, { status: newStatus }).subscribe({
-        next: (updated: any) => {
-          req.status = updated.status;
-          this.cdr.detectChanges();
-          this.showToast(`Status updated to ${newStatus}`, 'success');
-        },
-        error: () => this.showToast('Failed to update status', 'error')
-      });
+  loadChronicRequests() {
+    this.chronicRequests = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
+    this.cdr.detectChanges();
+}
+
+updateChronicStatus(req: any, newStatus: string) {
+    const all: any[] = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
+    const idx = all.findIndex((r: any) => r.id === req.id);
+    if (idx > -1) {
+        all[idx].status = newStatus;
+        all[idx].reviewedAt = new Date().toLocaleDateString();
+        localStorage.setItem('chronicRequests', JSON.stringify(all));
+        this.chronicRequests = all;
+        this.cdr.detectChanges();
+        this.showToast(`Status updated to ${newStatus}`, 'success');
     } else {
-      // Fallback localStorage request
-      req.status = newStatus;
-      localStorage.setItem('chronicRequests', JSON.stringify(this.chronicRequests));
-      this.showToast(`Status updated to ${newStatus}`, 'success');
+        this.showToast('Request not found.', 'error');
     }
-  }
+}
+deleteChronicRequest(req: any) {
+    this.showConfirm(`Delete request for "${req.medName}"?`).then(ok => {
+        if (!ok) return;
+        const all: any[] = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
+        const updated = all.filter((r: any) => r.id !== req.id);
+        localStorage.setItem('chronicRequests', JSON.stringify(updated));
+        this.chronicRequests = updated;
+        this.cdr.detectChanges();
+        this.showToast('Request deleted.', 'success');
+    });
+}
 
   // ---- Lightbox ----
   openLightbox(files: any[], startIndex = 0) {

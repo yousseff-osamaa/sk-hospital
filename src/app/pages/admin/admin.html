@@ -329,30 +329,51 @@
               </td>
 
               <!-- Documents column -->
-              <td style="padding: 1rem;">
-                <!-- Backend files (have file_url) -->
-                <div *ngIf="req.files && req.files.length > 0" style="display: flex; flex-wrap: wrap; gap: 6px;">
-                  <button *ngFor="let f of req.files; let i = index"
-                    (click)="openLightbox(req.files, i)"
-                    style="display: flex; align-items: center; gap: 5px; background: #f0fdf4; border: 1px solid #86efac;
-                           color: #166534; border-radius: 6px; padding: 4px 10px; font-size: 0.78rem;
-                           font-weight: 600; cursor: pointer; transition: 0.2s;"
-                    title="Click to view {{ f.filename }}">
-                    <span>{{ isImage(f.file_url) ? '🖼️' : '📄' }}</span>
-                    <span style="max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ f.filename }}</span>
-                  </button>
-                </div>
+             <!-- Medical Report Images -->
+<div *ngIf="req.medicalReport?.length > 0" style="margin-top: 0.75rem;">
+    <p style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+        📋 Medical Report
+    </p>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <div *ngFor="let img of req.medicalReport; let i = index">
+            <img *ngIf="img.startsWith('data:image')"
+                [src]="img"
+                (click)="openLightbox(req.medicalReport, i)"
+                style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; 
+                       cursor: pointer; border: 2px solid #e2e8f0; transition: transform 0.2s;"
+                onmouseover="this.style.transform='scale(1.05)'"
+                onmouseout="this.style.transform='scale(1)'">
+            <a *ngIf="!img.startsWith('data:image')"
+                [href]="img" target="_blank"
+                style="font-size: 0.8rem; color: var(--primary); text-decoration: underline;">
+                📄 Document {{ i + 1 }}
+            </a>
+        </div>
+    </div>
+</div>
 
-                <!-- Legacy localStorage files (just names, no URL) -->
-                <div *ngIf="(!req.files || req.files.length === 0) && req.files?.length === 0" style="color: #94a3b8; font-size: 0.82rem;">
-                  No files
-                </div>
-                <div *ngIf="!req.files && req.files !== null" style="display: flex; flex-wrap: wrap; gap: 4px;">
-                  <span *ngFor="let name of (req.files || [])" style="background: #f1f5f9; border-radius: 4px; padding: 2px 8px; font-size: 0.78rem; color: #475569;">📄 {{ name }}</span>
-                </div>
-                <span *ngIf="!req.files || req.files.length === 0" style="color: #94a3b8; font-size: 0.82rem;">No files</span>
-              </td>
-
+<!-- Prescription Images -->
+<div *ngIf="req.prescription?.length > 0" style="margin-top: 0.75rem;">
+    <p style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+        💊 Doctor Prescription
+    </p>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <div *ngFor="let img of req.prescription; let i = index">
+            <img *ngIf="img.startsWith('data:image')"
+                [src]="img"
+                (click)="openLightbox(req.prescription, i)"
+                style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; 
+                       cursor: pointer; border: 2px solid #e2e8f0; transition: transform 0.2s;"
+                onmouseover="this.style.transform='scale(1.05)'"
+                onmouseout="this.style.transform='scale(1)'">
+            <a *ngIf="!img.startsWith('data:image')"
+                [href]="img" target="_blank"
+                style="font-size: 0.8rem; color: var(--primary); text-decoration: underline;">
+                📄 Document {{ i + 1 }}
+            </a>
+        </div>
+    </div>
+</div>
               <td style="padding: 1rem;">
                 <span [ngClass]="req.status === 'Confirmed' ? 'badge-green' : (req.status === 'Rejected' ? 'badge-danger' : 'badge-orange')"
                   style="padding: 5px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
@@ -366,6 +387,12 @@
                 <button class="btn btn-sm btn-danger" (click)="updateChronicStatus(req, 'Rejected')"
                   [disabled]="req.status === 'Rejected'"
                   style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">Reject</button>
+                  <button (click)="deleteChronicRequest(req)"
+    style="background: #fee2e2; color: #b91c1c; border: none; padding: 4px 12px; 
+           border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+    🗑️ Delete
+</button>
+                  
               </td>
             </tr>
             <tr *ngIf="chronicRequests.length === 0">
@@ -583,7 +610,9 @@
       </div>
       <div class="form-group">
         <label>News Image</label>
-        <input type="file" accept="image/*" (change)="onImageSelected($event)" />
+
+<img *ngIf="currentNews.image" [src]="currentNews.image" class="img-preview" />
+
 
 <img *ngIf="currentEvent.image"
      [src]="currentEvent.image"

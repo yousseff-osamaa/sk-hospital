@@ -123,22 +123,21 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
     // Admin sets r.status = 'Approved' | 'Rejected' in localStorage.
     // Patient portal re-reads on every tab switch to show latest status.
     // ─────────────────────────────────────────────────────────────────
+   
     loadChronicRequests() {
-        const all: any[] = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
-        this.chronicRequests = all
-            .filter((r: any) => r.patientEmail === this.currentUser?.email)
-            .map((r: any) => ({
-                id:        r.id,
-                medName:   r.medName   || r.med_name || 'Chronic Med',
-                condition: r.condition || 'General',
-                doctor:    r.doctor    || '',
-                duration:  r.duration  || '',
-                status:    r.status    || 'Pending',   // ← admin writes here
-                files:     r.files     || [],
-                date:      r.date      || ''
-            }));
-    }
+  this.chronicRequests = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
+}
 
+updateChronicStatus(id: number, status: 'Approved' | 'Rejected') {
+  const all: any[] = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
+  const idx = all.findIndex(r => r.id === id);
+  if (idx > -1) {
+    all[idx].status = status;
+    all[idx].reviewedAt = new Date().toLocaleDateString();  // optional audit field
+    localStorage.setItem('chronicRequests', JSON.stringify(all));
+    this.loadChronicRequests(); // refresh admin table
+  }
+}
     loadPatientData() {
         if (!this.currentUser) return;
 
@@ -335,48 +334,64 @@ export class PatientPortalComponent implements OnInit, AfterViewInit {
     }
 
     // ================= CHRONIC =================
-    onChronicFileSelect(event: any) {
-        this.chronic.files = Array.from(event.target.files);
-    }
+  chronicMedicalReport: string[] = [];
+chronicPrescription: string[] = [];
+
+onChronicFileSelect(event: any, type: 'report' | 'prescription') {
+    const files: File[] = Array.from(event.target.files);
+    const readerPromises = files.map(file => {
+        return new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e: any) => resolve(e.target.result);
+            reader.readAsDataURL(file);
+        });
+    });
+
+    Promise.all(readerPromises).then(results => {
+        if (type === 'report') {
+            this.chronicMedicalReport = results;
+        } else {
+            this.chronicPrescription = results;
+        }
+    });
+}
 
     submitChronicRequest() {
-        if (this.chronic.files.length === 0) {
-            this.showToast('Please upload the required documents.', 'warning');
-            return;
-        }
-        if (!this.currentUser?.email) {
-            this.showToast('Please log in first.', 'error');
-            return;
-        }
-
-        // ── Persist to localStorage only ──
-        // Admin dashboard reads 'chronicRequests' and updates r.status
-        // Patient portal re-reads on every tab open to reflect changes
-        const newRequest = {
-            id:           Date.now(),
-            patientName:  this.currentUser.name,
-            patientEmail: this.currentUser.email,
-            patientPhone: this.currentUser.phone || '',
-            medName:      this.chronic.medName   || 'Chronic Med',
-            condition:    this.chronic.condition || 'General',
-            doctor:       this.chronic.doctor    || '',
-            duration:     this.chronic.duration  || '',
-            files:        this.chronic.files.map((f: File) => f.name),
-            status:       'Pending',   // admin sets 'Approved' or 'Rejected'
-            date:         new Date().toLocaleDateString()
-        };
-
-        const all: any[] = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
-        all.push(newRequest);
-        localStorage.setItem('chronicRequests', JSON.stringify(all));
-
-        // Immediately refresh the list shown to the patient
-        this.loadChronicRequests();
-
-        this.isSubmitted = true;
-        this.chronic = { medName: '', condition: '', doctor: '', duration: '', files: [] };
-        this.showToast('Request submitted successfully!', 'success');
+    if (this.chronicMedicalReport.length === 0 && this.chronicPrescription.length === 0) {
+        this.showToast('Please upload the required documents.', 'warning');
+        return;
     }
+    if (!this.currentUser?.email) {
+        this.showToast('Please log in first.', 'error');
+        return;
+    }
+
+    const newRequest = {
+        id:           Date.now(),
+        patientName:  this.currentUser.name,
+        patientEmail: this.currentUser.email,
+        patientPhone: this.currentUser.phone || '',
+        medName:      this.chronic.medName   || 'Chronic Med',
+        condition:    this.chronic.condition || 'General',
+        doctor:       this.chronic.doctor    || '',
+        duration:     this.chronic.duration  || '',
+        medicalReport:   this.chronicMedicalReport,   // ← base64 array
+        prescription:    this.chronicPrescription,     // ← base64 array
+        status:       'Pending',
+        date:         new Date().toLocaleDateString()
+    };
+
+    const all: any[] = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
+    all.push(newRequest);
+    localStorage.setItem('chronicRequests', JSON.stringify(all));
+
+    this.loadChronicRequests();
+    this.isSubmitted = true;
+    this.chronic = { medName: '', condition: '', doctor: '', duration: '', files: [] };
+    this.chronicMedicalReport = [];
+    this.chronicPrescription  = [];
+    this.showToast('Request submitted successfully!', 'success');
+}
 
     activate() {
         if (this.actCode === this.generatedCode || this.actCode === '1234') {

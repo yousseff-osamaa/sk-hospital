@@ -244,7 +244,7 @@ updateChronicStatus(id: number, status: 'Approved' | 'Rejected') {
         this.authService.register({
             email, password,
             first_name: first, last_name: last, phone,
-            redirect_url: `${window.location.origin}/verify-email`,
+            redirect_url: `${environment.frontendUrl}/verify-email`,
         }).subscribe({
             next: () => {
                 this.upsertProfile({ firstName: first, lastName: last, email, phone });

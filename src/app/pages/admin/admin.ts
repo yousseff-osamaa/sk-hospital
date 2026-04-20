@@ -6,6 +6,7 @@ import { DoctorService, Doctor } from '../../services/doctor.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { EventsService } from '../../services/events.service';
+import { ScheduleSlide } from '../schedules/schedules.component';
 
 @Component({
   selector: 'app-admin',
@@ -76,6 +77,10 @@ export class Admin implements OnInit {
   doctors: Doctor[] = [];
   news: any[] = [];
   eventsList: any[] = [];
+  scheduleSlides: ScheduleSlide[] = [];
+showScheduleModal = false;
+currentSlide: ScheduleSlide = { src: '', alt: '' };
+editingSlideIndex = -1; // -1 = adding new
   chronicRequests: any[] = [];
 
   // ---- Lightbox for chronic document viewer ----
@@ -101,6 +106,80 @@ export class Admin implements OnInit {
   isAdminLoggedIn = false;
   loginData = { username: '', password: '' };
   loginError = '';
+  heroSlides: string[] = [];
+showHeroModal = false;
+currentHeroImage: string = '';
+editingHeroIndex = -1;
+defaultHeroImages: any;
+
+loadHeroSlides() {
+  const stored = localStorage.getItem('heroImages');
+  this.heroSlides = stored ? JSON.parse(stored) : [];
+  this.cdr.detectChanges();
+}
+openHeroModal(image: string = '', index: number = -1) {
+  this.currentHeroImage = image;
+  this.editingHeroIndex = index;
+  this.showHeroModal = true;
+}
+// ✅ This stays ONLY in admin.component.ts
+onHeroImageSelected(event: any) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    this.showToast('Please select a valid image file', 'error');
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    this.currentHeroImage = reader.result as string; // ✅ THIS LINE WAS MISSING
+    this.cdr.detectChanges();
+  };
+
+  reader.onerror = () => this.showToast('Failed to load image', 'error');
+  reader.readAsDataURL(file);
+}
+saveHeroImage() {
+  if (!this.currentHeroImage) {
+    this.showToast('Please upload an image', 'warning');
+    return;
+  }
+
+  const all = [...this.heroSlides];
+
+  if (this.editingHeroIndex > -1) {
+    // ✏️ EDIT
+    all[this.editingHeroIndex] = this.currentHeroImage;
+    this.showToast('Image updated!', 'success');
+  } else {
+    // 🆕 ADD NEW (NEWEST FIRST)
+    all.unshift(this.currentHeroImage);
+    this.showToast('Image added!', 'success');
+  }
+
+  localStorage.setItem('heroImages', JSON.stringify(all));
+
+  this.heroSlides = all;
+  this.showHeroModal = false;
+  this.cdr.detectChanges();
+} 
+deleteHeroImage(index: number) {
+  this.showConfirm('Delete this image?').then(ok => {
+    if (!ok) return;
+
+    const updated = this.heroSlides.filter((_, i) => i !== index);
+
+    localStorage.setItem('heroImages', JSON.stringify(updated));
+
+    this.heroSlides = updated;
+    this.cdr.detectChanges();
+
+    this.showToast('Deleted successfully!', 'success');
+  });
+}
 
   // ---- Toast / Popup system ----
   toasts: { id: number; msg: string; type: 'success'|'error'|'warning'; icon: string }[] = [];
@@ -164,7 +243,17 @@ onImageSelected(event: any) {
   }
 
   // ---- Active admin section tab ----
-  activeSection: 'doctors'|'appointments'|'news'|'events'|'patients'|'chronic'|'contact' = 'doctors';
+activeSection:
+  | 'doctors'
+  | 'appointments'
+  | 'news'
+  | 'events'
+  | 'patients'
+  | 'chronic'
+  | 'contact'
+  | 'schedules'
+  | 'slider'
+  = 'doctors';
 
   // ---- Doctor list filter (in Doctors tab) ----
   docSearch = '';
@@ -285,35 +374,117 @@ ngOnInit() {
     // Do NOT clear localStorage — that belongs to the patient session
     this.router.navigate(['/']);
   }
-
-  loadData() {
-    this.patientRequests = JSON.parse(localStorage.getItem('portalRequests') || '[]');
-    this.contactMessages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
-
-    this.http.get<any[]>(`${this.apiBase}/appointments/`).subscribe({
-      next: (data: any[]) => { this.patientAppointments = data; this.cdr.detectChanges(); },
-      error: () => {
-        this.patientAppointments = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
-        this.cdr.detectChanges();
-      }
-    });
-
-    this.doctorService.getDoctorsFromApi().subscribe((doctors: Doctor[]) => {
-      this.doctors = doctors;
-      this.cdr.detectChanges();
-    });
-
-    this.loadNews();
-    this.loadAdminEvents();
-    this.loadChronicRequests();
+  // ================= SCHEDULES =================
+loadScheduleSlides() {
+    const stored = localStorage.getItem('scheduleSlides');
+    this.scheduleSlides = stored
+        ? JSON.parse(stored)
+        : []; // admin sees only what's stored
     this.cdr.detectChanges();
-  }
+}
 
+openSlideModal(slide?: ScheduleSlide, index = -1) {
+    this.editingSlideIndex = index;
+    this.currentSlide = slide
+        ? { ...slide }
+        : { src: '', alt: '' };
+    this.showScheduleModal = true;
+}
+
+onSlideImageSelected(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+        this.currentSlide.src = e.target.result;
+        this.cdr.detectChanges();
+    };
+    reader.readAsDataURL(file);
+}
+
+saveSlide() {
+    if (!this.currentSlide.src) {
+        this.showToast('Please upload an image.', 'warning');
+        return;
+    }
+    const all = [...this.scheduleSlides];
+    if (this.editingSlideIndex > -1) {
+        all[this.editingSlideIndex] = { ...this.currentSlide };
+        this.showToast('Schedule updated!', 'success');
+    } else {
+        all.push({ ...this.currentSlide });
+        this.showToast('Schedule added!', 'success');
+    }
+    localStorage.setItem('scheduleSlides', JSON.stringify(all));
+    this.scheduleSlides = all;
+    this.showScheduleModal = false;
+    this.cdr.detectChanges();
+}
+
+deleteSlide(index: number) {
+    this.showConfirm('Delete this schedule image?').then(ok => {
+        if (!ok) return;
+        const all = this.scheduleSlides.filter((_, i) => i !== index);
+        localStorage.setItem('scheduleSlides', JSON.stringify(all));
+        this.scheduleSlides = all;
+        this.cdr.detectChanges();
+        this.showToast('Schedule deleted!', 'success');
+    });
+}
+
+loadData() {
+  this.loadScheduleSlides();
+  this.loadHeroSlides(); // ✅ add this if missing
+
+  // ✅ Load once (was duplicated 3 times)
+  this.patientRequests = JSON.parse(localStorage.getItem('portalRequests') || '[]');
+  this.contactMessages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
+  this.loadChronicRequests();
+  this.loadNews();
+  this.loadAdminEvents();
+
+  // ✅ MERGE API appointments + localStorage appointments
+  this.http.get<any[]>(`${this.apiBase}/appointments/`).subscribe({
+    next: (apiData: any[]) => {
+      const localData: any[] = JSON.parse(
+        localStorage.getItem('patientAppointments') || '[]'
+      );
+
+      // Merge: avoid duplicates by checking a unique field (e.g. id or timestamp)
+      const merged = [...apiData];
+      for (const local of localData) {
+        const alreadyExists = merged.some(
+          a => a.id === local.id || 
+               (a.name === local.name && a.date === local.date && a.doctor === local.doctor)
+        );
+        if (!alreadyExists) merged.push(local);
+      }
+
+      this.patientAppointments = merged;
+      this.cdr.detectChanges();
+    },
+    error: () => {
+      // API failed — fall back to localStorage only
+      this.patientAppointments = JSON.parse(
+        localStorage.getItem('patientAppointments') || '[]'
+      );
+      this.cdr.detectChanges();
+    }
+  });
+
+  this.doctorService.getDoctorsFromApi().subscribe((doctors: Doctor[]) => {
+    this.doctors = doctors;
+    this.cdr.detectChanges();
+  });
+
+  this.cdr.detectChanges();
+}
 
   loadChronicRequests() {
     this.chronicRequests = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
     this.cdr.detectChanges();
 }
+// ✅ This stays ONLY in admin.component.ts
 
 updateChronicStatus(req: any, newStatus: string) {
     const all: any[] = JSON.parse(localStorage.getItem('chronicRequests') || '[]');

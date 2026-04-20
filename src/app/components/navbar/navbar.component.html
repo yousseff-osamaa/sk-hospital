@@ -27,9 +27,9 @@
  
 
   <!-- 👇 OPTIONAL -->
-  <li *ngIf="isPatient">
-    <a routerLink="/appointment">Book Appointment</a>
-  </li>
+    <!-- <li *ngIf="isPatient">
+      <a routerLink="/appointment">Book Appointment</a>
+    </li> -->
 </ul>
   
     
@@ -51,7 +51,7 @@
       
       <ng-container *ngIf="!isLoggedIn && !isAdmin">
         
-        <a routerLink="/portal" class="btn-login-link">Login</a>
+        <a routerLink="/login" class="btn-login-link">Login</a>
       </ng-container>
 
       <ng-container *ngIf="isPatient && !isAdmin">

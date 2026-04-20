@@ -14,7 +14,9 @@ export interface ScheduleSlide {
   styleUrls: ['./schedules.component.scss']
 })
 export class SchedulesComponent implements OnInit, OnDestroy, AfterViewInit {
-  slides: ScheduleSlide[] = [
+
+  // ✅ DEFAULT_SLIDES is a proper readonly array — never undefined
+  private readonly DEFAULT_SLIDES: ScheduleSlide[] = [
     { src: '/doc1.jpg', alt: 'جدول مواعيد عيادات الجراحة والقلب — مستشفى سُعاد كفافي الجامعي' },
     { src: '/doc2.jpg', alt: 'جدول مواعيد عيادات العظام والجلدية — مستشفى سُعاد كفافي الجامعي' },
     { src: '/doc3.jpg', alt: 'جدول مواعيد عيادات الباطنة والأطفال — مستشفى سُعاد كفافي الجامعي' },
@@ -40,16 +42,37 @@ export class SchedulesComponent implements OnInit, OnDestroy, AfterViewInit {
     { src: '/assets/schedules/schedule-16.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' }
   ];
 
+  slides: ScheduleSlide[] = [];
   currentIndex = 0;
   private intervalId: ReturnType<typeof setInterval> | null = null;
 
   constructor(@Inject(PLATFORM_ID) private platformId: object) {}
 
   ngOnInit(): void {
+    this.loadSlides();
     if (isPlatformBrowser(this.platformId)) {
       this.intervalId = setInterval(() => this.next(), 8000);
     }
   }
+
+  loadSlides(): void {
+    
+  try {
+    const stored = localStorage.getItem('scheduleSlides');
+
+    const storedSlides: ScheduleSlide[] =
+      stored && JSON.parse(stored).length > 0
+        ? JSON.parse(stored)
+        : [];
+
+    // ✅ Merge defaults + stored (admin-added)
+    this.slides = [...this.DEFAULT_SLIDES, ...storedSlides];
+
+  } catch {
+    // fallback safely
+    this.slides = [...this.DEFAULT_SLIDES];
+  }
+}
 
   ngAfterViewInit(): void {
     if (typeof (window as any).lucide !== 'undefined') {

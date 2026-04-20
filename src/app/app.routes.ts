@@ -14,6 +14,7 @@ import { VerifyEmailComponent } from './pages/verify-email/verify-email.componen
 import { OurServiceComponent } from './pages/our-service/our-service.component';
 
 export const routes: Routes = [
+    { path: 'login', component: PatientPortalComponent },
     { path: '', component: HomeComponent },
     { path: 'appointment', component: AppointmentComponent },
     { path: 'portal', component: PatientPortalComponent },

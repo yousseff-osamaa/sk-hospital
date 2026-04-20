@@ -125,47 +125,134 @@ export class AppointmentComponent implements OnInit {
         this.reinitIcons();
     }
 
-confirmBooking() {
+// confirmBooking() {
     
+//     if (this.isSubmitting || !this.selectedDoctor) return;
+//     this.isSubmitting = true;
+
+//     const dateStr = this.bookingData.date || new Date().toISOString().slice(0, 10);
+//     const patientName = this.getPatientFullName();
+
+//     const payload = {
+//         doctorName: this.selectedDoctor.name,
+//         patientName,
+//         patientPhone: this.bookingData.phone,
+//         date: dateStr,
+//         id: this.ref,
+//         reason: this.bookingData.reason || ''
+//     };
+
+//     this.http.post(`${environment.apiUrl}/appointments/create/`, payload)
+//         .subscribe({
+//             next: () => {
+
+//                 this.isSubmitting = false;
+//                 this.bookingState = 'success';
+
+//                 // 🔥 مهم جدًا: بعد 1.5 ثانية نرجع للـ portal
+//                 setTimeout(() => {
+//                     this.router.navigate(['/portal'], {
+//                         queryParams: { refresh: Date.now() }
+//                     });
+//                 }, 1500);
+
+//                 this.reinitIcons();
+//             },
+//             error: (err) => {
+//                 console.error(err);
+//                 this.isSubmitting = false;
+//                 alert('حدث خطأ أثناء الحجز');
+//             }
+//         });
+// }
+// confirmBooking() {
+//     if (this.isSubmitting || !this.selectedDoctor) return;
+//     this.isSubmitting = true;
+
+//     const dateStr = this.bookingData.date || new Date().toISOString().slice(0, 10);
+//     const patientName = this.getPatientFullName();
+
+//     const payload = {
+//         doctorName: this.selectedDoctor.name,
+//         patientName,
+//         patientPhone: this.bookingData.phone,
+//         date: dateStr,
+//         id: this.ref,
+//         reason: this.bookingData.reason || ''
+//     };
+
+//     this.http.post(`${environment.apiUrl}/appointments/create/`, payload)
+//         .subscribe({
+//             next: () => {
+//                 this.isSubmitting = false;
+//                 this.bookingState = 'success';
+
+//                 // ✅ Save to localStorage so portal can display it
+//                 const existing: any[] = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
+//                 existing.push({
+//                     id: this.ref,
+//                     doctorName: this.selectedDoctor!.name,
+//                     specialty: this.selectedDoctor!.specialty,
+//                     patientName,
+//                     patientPhone: this.bookingData.phone,
+//                     patientEmail: JSON.parse(localStorage.getItem('currentUser') || '{}')?.email ?? '',
+//                     date: dateStr,
+//                     reason: this.bookingData.reason || '',
+//                     status: 'Confirmed',
+//                     queuePosition: this.queuePosition
+//                 });
+//                 localStorage.setItem('patientAppointments', JSON.stringify(existing));
+
+//                 setTimeout(() => {
+//                     this.router.navigate(['/portal'], {
+//                         queryParams: { refresh: Date.now() }
+//                     });
+//                 }, 1500);
+
+//                 this.reinitIcons();
+//             },
+//             error: (err) => {
+//                 console.error(err);
+//                 this.isSubmitting = false;
+//                 alert('حدث خطأ أثناء الحجز');
+//             }
+//         });
+// }
+confirmBooking() {
     if (this.isSubmitting || !this.selectedDoctor) return;
     this.isSubmitting = true;
 
     const dateStr = this.bookingData.date || new Date().toISOString().slice(0, 10);
     const patientName = this.getPatientFullName();
 
-    const payload = {
-        doctorName: this.selectedDoctor.name,
+    const newAppointment = {
+        id:            Date.now(),  // unique ID from timestamp
+        doctorName:    this.selectedDoctor.name,
+        specialty:     this.selectedDoctor.specialty,
         patientName,
-        patientPhone: this.bookingData.phone,
-        date: dateStr,
-        id: this.ref,
-        reason: this.bookingData.reason || ''
+        patientPhone:  this.bookingData.phone,
+        patientEmail:  JSON.parse(localStorage.getItem('currentUser') || '{}')?.email ?? '',
+        date:          dateStr,
+        reason:        this.bookingData.reason || '',
+        status:        'Confirmed',
+        queuePosition: this.queuePosition
     };
 
-    this.http.post(`${environment.apiUrl}/appointments/create/`, payload)
-        .subscribe({
-            next: () => {
+    // Save to localStorage directly — no backend needed
+    const existing: any[] = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
+    existing.push(newAppointment);
+    localStorage.setItem('patientAppointments', JSON.stringify(existing));
 
-                this.isSubmitting = false;
-                this.bookingState = 'success';
+    this.isSubmitting = false;
+    this.bookingState = 'success';
+    this.reinitIcons();
 
-                // 🔥 مهم جدًا: بعد 1.5 ثانية نرجع للـ portal
-                setTimeout(() => {
-                    this.router.navigate(['/portal'], {
-                        queryParams: { refresh: Date.now() }
-                    });
-                }, 1500);
-
-                this.reinitIcons();
-            },
-            error: (err) => {
-                console.error(err);
-                this.isSubmitting = false;
-                alert('حدث خطأ أثناء الحجز');
-            }
+    setTimeout(() => {
+        this.router.navigate(['/portal'], {
+            queryParams: { refresh: Date.now() }
         });
+    }, 1500);
 }
-
     private afterBookingSaved() {
         // بدلاً من إضافة الموعد يدوياً، يفضل في صفحة Portal عمل Get للمواعيد من السيرفر مباشرة
         // لضمان أنه في حال حذف الأدمن للموعد، يختفي من عند المستخدم.

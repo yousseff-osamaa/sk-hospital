@@ -137,16 +137,32 @@ export class NewsComponent implements OnInit, OnDestroy {
 
   newsArticles: any[] = [];
 
-  ngOnInit() {
+ngOnInit() {
+    // Start with localStorage news immediately
+    const stored: any[] = JSON.parse(localStorage.getItem('newsArticles') || '[]');
+    this.newsArticles = stored;
+    this.cd.detectChanges();
+
+    // Then fetch from DB and merge (DB news + localStorage news combined)
     this.http.get<any[]>(`${environment.apiUrl}/news/`).subscribe({
-      next: (data) => {
-        this.newsArticles = data;
-        this.cd.detectChanges();
-      },
-      error: (err) => console.error('Error loading news:', err)
+        next: (dbNews) => {
+            // Merge: DB news first, then localStorage-only news after
+            // Avoid duplicates by filtering out localStorage items that have same title as DB
+            const dbTitles = new Set(dbNews.map((n: any) => n.title?.toLowerCase()));
+            const localOnly = stored.filter((n: any) =>
+                !dbTitles.has(n.title?.toLowerCase())
+            );
+            this.newsArticles = [...dbNews, ...localOnly];
+            this.cd.detectChanges();
+        },
+        error: () => {
+            // DB failed — just use localStorage news, already set above
+            this.cd.detectChanges();
+        }
     });
+
     this.startTimer();
-  }
+}
 
   ngOnDestroy() {
     this.stopTimer();

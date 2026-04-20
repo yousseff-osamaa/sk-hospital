@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -66,7 +66,10 @@ import { EventsService } from '../../services/events.service';
     .img-upload-area:hover { border-color: var(--primary, #00a76f); }
   `
 })
+
 export class Admin implements OnInit {
+  
+
   patientRequests: any[] = [];
   contactMessages: any[] = [];
   patientAppointments: any[] = [];
@@ -124,10 +127,14 @@ onImageSelected(event: any) {
   reader.readAsDataURL(file);
 }
 
+  // get specialties(): string[] {
+  //   const s = new Set(this.doctors.map(d => d.specialty).filter(Boolean));
+  //   return Array.from(s);
+  // }
   get specialties(): string[] {
     const s = new Set(this.doctors.map(d => d.specialty).filter(Boolean));
     return Array.from(s);
-  }
+}
   get filteredDoctors(): Doctor[] {
     const q = this.apptSearchDoctor.toLowerCase();
     return this.doctors.filter(d =>
@@ -162,6 +169,40 @@ onImageSelected(event: any) {
   // ---- Doctor list filter (in Doctors tab) ----
   docSearch = '';
   docFilterSpecialty = '';
+readonly SPECIALTIES = [
+    'أمراض القلب والأوعية الدموية',
+    'أمراض الجلدية',
+    'طب الطوارئ',
+    'أمراض الغدد الصماء',
+    'أمراض الجهاز الهضمي',
+    'الجراحة العامة',
+    'أمراض النساء والتوليد',
+    'أمراض الدم',
+    'الطب الباطني',
+    'أمراض الكلى',
+    'أمراض الأعصاب',
+    'جراحة المخ والأعصاب',
+    'أمراض الأورام',
+    'طب وجراحة العيون',
+    'جراحة العظام والمفاصل',
+    'أمراض الأنف والأذن والحنجرة',
+    'طب الأطفال',
+    'الطب النفسي',
+    'أمراض الصدر والجهاز التنفسي',
+    'الأشعة التشخيصية',
+    'أمراض الروماتيزم',
+    'جراحة المسالك البولية',
+    'جراحة الأوعية الدموية',
+    'طب الأسنان',
+    'التغذية العلاجية',
+    'العلاج الطبيعي وإعادة التأهيل'
+];
+
+get uniqueSpecialties(): string[] {
+    const fromDoctors = this.doctors.map(d => d.specialty).filter(Boolean);
+    const merged = new Set([...this.SPECIALTIES, ...fromDoctors]);
+    return Array.from(merged).sort();
+}
   get filteredDoctorList(): Doctor[] {
     return this.doctors.filter(d => {
       const matchSpec = !this.docFilterSpecialty || d.specialty === this.docFilterSpecialty;
@@ -183,17 +224,27 @@ onImageSelected(event: any) {
     private http: HttpClient,
     private eventsService: EventsService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private zone: NgZone 
   ) {}
-
-  ngOnInit() {
+  
+ngOnInit() {
     const sessionAuth = sessionStorage.getItem('isAdminLoggedIn');
     if (sessionAuth === 'true') {
-      this.isAdminLoggedIn = true;
-      // Defer data load so *ngIf="isAdminLoggedIn" renders first
-      setTimeout(() => this.loadData(), 0);
+        this.isAdminLoggedIn = true;
+        setTimeout(() => this.loadData(), 0);
     }
-  }
+
+    // ✅ Listen for patient cancellations from other tabs
+    window.addEventListener('storage', (event: StorageEvent) => {
+        if (event.key === 'adminRefreshFlag' && this.isAdminLoggedIn) {
+            this.zone.run(() => {
+                this.loadData();
+                this.showToast('A patient cancelled an appointment.', 'warning');
+            });
+        }
+    });
+}
 
   goToDashboard() {
     this.router.navigate(['/']);
@@ -428,59 +479,165 @@ deleteChronicRequest(req: any) {
     }
   }
 
-  deleteAppointment(id: any) {
+  // deleteAppointment(id: any) {
+  //   this.showConfirm('Delete this appointment?').then(ok => {
+  //     if (!ok) return;
+  //     this.http.delete(`${this.apiBase}/appointments/${id}/delete/`).subscribe({
+  //       next: () => { this.loadData(); this.showToast('Appointment deleted!', 'success'); },
+  //       error: (err: any) => this.showToast('Error: ' + JSON.stringify(err.error), 'error')
+  //     });
+  //   });
+  // }
+// deleteAppointment(id: any) {
+//     this.showConfirm('Delete this appointment?').then(ok => {
+//         if (!ok) return;
+
+//         // ✅ Find by id BEFORE deleting from API — use the correct array name
+//         const target = this.patientAppointments.find((a: any) => a.id === id);
+//         const refId  = target?.reference_id ?? target?.id;
+
+//         this.http.delete(`${this.apiBase}/appointments/${id}/delete/`).subscribe({
+//             next: () => {
+//                 // ✅ Remove from localStorage by BOTH numeric id AND SKH-XXXX reference
+//                 const existing: any[] = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
+//                 const updated = existing.filter((a: any) =>
+//                     a.id !== id &&
+//                     a.id !== refId &&
+//                     a.id !== String(id) &&
+//                     a.id !== String(refId)
+//                 );
+//                 localStorage.setItem('patientAppointments', JSON.stringify(updated));
+
+//                 this.loadData();
+//                 this.showToast('Appointment deleted!', 'success');
+//             },
+//             error: (err: any) => this.showToast('Error: ' + JSON.stringify(err.error), 'error')
+//         });
+//     });
+// }
+deleteAppointment(id: any) {
     this.showConfirm('Delete this appointment?').then(ok => {
-      if (!ok) return;
-      this.http.delete(`${this.apiBase}/appointments/${id}/delete/`).subscribe({
-        next: () => { this.loadData(); this.showToast('Appointment deleted!', 'success'); },
-        error: (err: any) => this.showToast('Error: ' + JSON.stringify(err.error), 'error')
-      });
-    });
-  }
+        if (!ok) return;
 
+        // Try backend first, always remove from localStorage regardless
+        const removeLocally = () => {
+            const existing: any[] = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
+            const updated = existing.filter((a: any) =>
+                a.id !== id &&
+                a.id !== String(id)
+            );
+            localStorage.setItem('patientAppointments', JSON.stringify(updated));
+
+            // Remove from displayed list immediately
+            this.patientAppointments = this.patientAppointments.filter((a: any) =>
+                a.id !== id && a.id !== String(id)
+            );
+            this.cdr.detectChanges();
+            this.showToast('Appointment deleted!', 'success');
+        };
+
+        this.http.delete(`${this.apiBase}/appointments/${id}/delete/`).subscribe({
+            next: () => removeLocally(),
+            error: () => removeLocally()  // ← delete locally even if backend fails
+        });
+    });
+}
   // ================= NEWS =================
-  loadNews() {
-    this.http.get<any[]>(`${this.apiBase}/news/`).subscribe({
-      next: (data: any[]) => { this.news = data; this.cdr.detectChanges(); },
-      error: () => { this.news = []; this.cdr.detectChanges(); }
-    });
-  }
+  // loadNews() {
+  //   this.http.get<any[]>(`${this.apiBase}/news/`).subscribe({
+  //     next: (data: any[]) => { this.news = data; this.cdr.detectChanges(); },
+  //     error: () => { this.news = []; this.cdr.detectChanges(); }
+  //   });
+  // }
 
-  openNewsModal(article?: any) {
+  // openNewsModal(article?: any) {
+  //   if (article) {
+  //     this.currentNews = { ...article };
+  //     // Use absolute image_url so the preview <img> loads correctly across ports
+  //     this.currentNews.image = article.image_url || article.image || '';
+  //   } else {
+  //     this.currentNews = { title: '', category: '', date: '', summary: '', content: '', image: '' };
+  //   }
+  //   this.showNewsModal = true;
+  // }
+
+  // saveNews() {
+  //   const payload = { ...this.currentNews };
+  //   if (this.currentNews.id) {
+  //     this.http.put(`${this.apiBase}/news/${this.currentNews.id}/update/`, payload).subscribe({
+  //       next: () => { this.loadNews(); this.showNewsModal = false; this.showToast('News updated!', 'success'); },
+  //       error: (err: any) => this.showToast('Error: ' + (err.error?.error || JSON.stringify(err.error)), 'error')
+  //     });
+  //   } else {
+  //     this.http.post(`${this.apiBase}/news/create/`, payload).subscribe({
+  //       next: () => { this.loadNews(); this.showNewsModal = false; this.showToast('News added!', 'success'); },
+  //       error: (err: any) => this.showToast('Error: ' + (err.error?.error || JSON.stringify(err.error)), 'error')
+  //     });
+  //   }
+  // }
+  loadNews() {
+    this.news = JSON.parse(localStorage.getItem('newsArticles') || '[]');
+    this.cdr.detectChanges();
+}
+
+openNewsModal(article?: any) {
     if (article) {
-      this.currentNews = { ...article };
-      // Use absolute image_url so the preview <img> loads correctly across ports
-      this.currentNews.image = article.image_url || article.image || '';
+        this.currentNews = { ...article };
     } else {
-      this.currentNews = { title: '', category: '', date: '', summary: '', content: '', image: '' };
+        this.currentNews = {
+            id:       '',
+            title:    '',
+            category: '',
+            date:     new Date().toLocaleDateString(),
+            summary:  '',
+            content:  '',
+            image:    ''
+        };
     }
     this.showNewsModal = true;
-  }
+}
 
-  saveNews() {
-    const payload = { ...this.currentNews };
+saveNews() {
+    const all: any[] = JSON.parse(localStorage.getItem('newsArticles') || '[]');
+
     if (this.currentNews.id) {
-      this.http.put(`${this.apiBase}/news/${this.currentNews.id}/update/`, payload).subscribe({
-        next: () => { this.loadNews(); this.showNewsModal = false; this.showToast('News updated!', 'success'); },
-        error: (err: any) => this.showToast('Error: ' + (err.error?.error || JSON.stringify(err.error)), 'error')
-      });
+        // Edit existing
+        const idx = all.findIndex((n: any) => n.id === this.currentNews.id);
+        if (idx > -1) {
+            all[idx] = { ...this.currentNews };
+        }
     } else {
-      this.http.post(`${this.apiBase}/news/create/`, payload).subscribe({
-        next: () => { this.loadNews(); this.showNewsModal = false; this.showToast('News added!', 'success'); },
-        error: (err: any) => this.showToast('Error: ' + (err.error?.error || JSON.stringify(err.error)), 'error')
-      });
+        // Add new
+        this.currentNews.id = Date.now();
+        all.unshift({ ...this.currentNews }); // unshift = newest first
     }
-  }
 
-  deleteNews(id: number) {
+    localStorage.setItem('newsArticles', JSON.stringify(all));
+    this.loadNews();
+    this.showNewsModal = false;
+    this.showToast(this.currentNews.id ? 'News updated!' : 'News added!', 'success');
+}
+
+deleteNews(id: any) {
     this.showConfirm('Delete this news article?').then(ok => {
-      if (!ok) return;
-      this.http.delete(`${this.apiBase}/news/${id}/delete/`).subscribe({
-        next: () => { this.loadNews(); this.showToast('News deleted!', 'success'); },
-        error: (err: any) => this.showToast('Error: ' + (err.error?.error || JSON.stringify(err.error)), 'error')
-      });
+        if (!ok) return;
+        const all: any[] = JSON.parse(localStorage.getItem('newsArticles') || '[]');
+        const updated = all.filter((n: any) => n.id !== id);
+        localStorage.setItem('newsArticles', JSON.stringify(updated));
+        this.loadNews();
+        this.showToast('News deleted!', 'success');
     });
-  }
+}
+
+  // deleteNews(id: number) {
+  //   this.showConfirm('Delete this news article?').then(ok => {
+  //     if (!ok) return;
+  //     this.http.delete(`${this.apiBase}/news/${id}/delete/`).subscribe({
+  //       next: () => { this.loadNews(); this.showToast('News deleted!', 'success'); },
+  //       error: (err: any) => this.showToast('Error: ' + (err.error?.error || JSON.stringify(err.error)), 'error')
+  //     });
+  //   });
+  // }
 
   // ================= EVENTS =================
   loadAdminEvents() {

@@ -26,15 +26,26 @@ import { FormsModule } from '@angular/forms';
             </div>
 
             <div class="form-group" style="margin-bottom: 1.2rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Your Name</label>
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">First Name</label>
+                <input type="text" [(ngModel)]="contactName" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 1.2rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Last Name</label>
+                <input type="text" [(ngModel)]="contactName" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 1.2rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Email</label>
                 <input type="text" [(ngModel)]="contactName" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
             </div>
             
             <div class="form-group" style="margin-bottom: 1.2rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Phone / Email</label>
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Phone </label>
                 <input type="text" [(ngModel)]="contactPhone" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
             </div>
-            
+            <div class="form-group" style="margin-bottom: 1.2rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Title</label>
+                <input type="text" [(ngModel)]="contactName" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            </div>
             <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Message</label>
                 <textarea [(ngModel)]="contactBody" rows="5" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;"></textarea>

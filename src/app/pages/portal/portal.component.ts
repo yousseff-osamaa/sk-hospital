@@ -139,12 +139,21 @@ updateChronicStatus(id: number, status: 'Approved' | 'Rejected') {
   }
 }
     loadPatientData() {
-        if (!this.currentUser) return;
+        // if (!this.currentUser) return;
 
-        const allAppointments: any[] = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
-        this.myAppointments = allAppointments.filter(
-            (a: any) => a.patientPhone === this.currentUser.phone || a.patientEmail === this.currentUser.email
-        );
+        // const allAppointments: any[] = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
+        // this.myAppointments = allAppointments.filter(
+        //     (a: any) => a.patientPhone === this.currentUser.phone || a.patientEmail === this.currentUser.email
+        // );
+         if (!this.currentUser) return;
+
+    const allAppointments: any[] = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
+    this.myAppointments = allAppointments.filter(
+        (a: any) =>
+            a.patientPhone === this.currentUser.phone ||
+            a.patientEmail === this.currentUser.email ||
+            a.patientName  === this.currentUser.name   // ✅ fallback match
+    );
 
         this.labResults = [
             { date: '2026-03-15', name: 'CBC', result: 'Normal', status: 'Final' },
@@ -301,23 +310,64 @@ updateChronicStatus(id: number, status: 'Approved' | 'Rejected') {
         this.viewState = 'login';
     }
 
+    // cancelAppointment(appt: any) {
+    //     this.showConfirm('Cancel this appointment?').then(ok => {
+    //         this.zone.run(() => {
+    //             if (!ok) return;
+    //             this.http.delete(`${this.apiBase}/appointments/${appt.id}/delete/`).subscribe({
+    //                 next: () => {
+    //                     this.loadPatientData();
+    //                     this.showToast('Appointment cancelled.', 'success');
+    //                 },
+    //                 error: () => {
+    //                     this.showToast('Failed to cancel appointment.', 'error');
+    //                 }
+    //             });
+    //         });
+    //     });
+    // }
     cancelAppointment(appt: any) {
-        this.showConfirm('Cancel this appointment?').then(ok => {
-            this.zone.run(() => {
-                if (!ok) return;
+    this.showConfirm('Cancel this appointment?').then(ok => {
+        this.zone.run(() => {
+            if (!ok) return;
+
+            // Try backend first, fallback to localStorage
+            if (appt.id && !isNaN(appt.id)) {
                 this.http.delete(`${this.apiBase}/appointments/${appt.id}/delete/`).subscribe({
                     next: () => {
-                        this.loadPatientData();
+                        this.removeAppointmentLocally(appt);
                         this.showToast('Appointment cancelled.', 'success');
                     },
                     error: () => {
-                        this.showToast('Failed to cancel appointment.', 'error');
+                        // Backend failed — remove from localStorage only
+                        this.removeAppointmentLocally(appt);
+                        this.showToast('Appointment cancelled.', 'success');
                     }
                 });
-            });
+            } else {
+                // No backend ID — localStorage only
+                this.removeAppointmentLocally(appt);
+                this.showToast('Appointment cancelled.', 'success');
+            }
         });
-    }
+    });
+}
 
+private removeAppointmentLocally(appt: any) {
+    // Remove from localStorage
+    const all: any[] = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
+    const updated = all.filter((a: any) =>
+        a.id !== appt.id &&
+        !(a.patientPhone === appt.patientPhone && a.date === appt.date && a.doctorName === appt.doctorName)
+    );
+    localStorage.setItem('patientAppointments', JSON.stringify(updated));
+
+    // Remove from the displayed list immediately
+    this.myAppointments = this.myAppointments.filter((a: any) =>
+        a.id !== appt.id &&
+        !(a.patientPhone === appt.patientPhone && a.date === appt.date && a.doctorName === appt.doctorName)
+    );
+}   
     // ================= INSURANCE =================
     onFileSelect(event: any) {
         if (event.target.files.length > 0) {

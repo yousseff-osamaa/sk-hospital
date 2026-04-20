@@ -84,4 +84,17 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
     this.authSub?.unsubscribe();
     this.routerSub?.unsubscribe();
   }
+
+  skipToMain() {
+    setTimeout(() => {
+        const el = document.getElementById('main-content');
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 100); // small delay lets the route render first
+    this.isMenuOpen = false;
 }
+
+}
+
+

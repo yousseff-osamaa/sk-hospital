@@ -16,13 +16,15 @@
       <li><a routerLink="/services" routerLinkActive="active" (click)="isMenuOpen=false">Services</a></li>
       <li><a routerLink="/doctors" routerLinkActive="active" (click)="isMenuOpen=false">Doctors</a></li>
       <li><a routerLink="/schedules" routerLinkActive="active" (click)="isMenuOpen=false">Schedules</a></li>
+           <li *ngIf="isPatient">
+    <a routerLink="/portal">My Portal</a>
+  </li>
       <li><a routerLink="/news" routerLinkActive="active" (click)="isMenuOpen=false">News</a></li>
       <li><a routerLink="/events" routerLinkActive="active" (click)="isMenuOpen=false">Events</a></li>
       <li><a routerLink="/contact" routerLinkActive="active" (click)="isMenuOpen=false">Contact Us</a></li>
-      
-      <li *ngIf="isPatient">
-    <a routerLink="/portal">My Portal</a>
-  </li>
+      <li>
+ 
+ 
 
   <!-- 👇 OPTIONAL -->
   <li *ngIf="isPatient">

@@ -56,10 +56,10 @@
   <!-- Section Tabs -->
   <div class="admin-tabs">
     <button class="admin-tab" [class.active]="activeSection==='doctors'" (click)="setSection('doctors')">Doctors</button>
-    <button class="admin-tab" [class.active]="activeSection==='appointments'" (click)="setSection('appointments')">Appointments</button>
+    <button class="admin-tab" [class.active]="activeSection==='appointments'" (click)="setSection('appointments')">Patient Reservations</button>
     <button class="admin-tab" [class.active]="activeSection==='news'" (click)="setSection('news')">News</button>
     <button class="admin-tab" [class.active]="activeSection==='events'" (click)="setSection('events')">Events</button>
-    <button class="admin-tab" [class.active]="activeSection==='patients'" (click)="setSection('patients')">Patient Reservations</button>
+
     <button class="admin-tab" [class.active]="activeSection==='chronic'" (click)="setSection('chronic')">Chronic Requests</button>
     <button class="admin-tab" [class.active]="activeSection==='contact'" (click)="setSection('contact')">Messages</button>
   </div>
@@ -489,10 +489,19 @@
         <label>Name</label>
         <input type="text" name="name" [(ngModel)]="currentDoctor.name" required>
       </div>
-      <div class="form-group">
-        <label>Specialty</label>
-        <input type="text" name="specialty" [(ngModel)]="currentDoctor.specialty" required>
-      </div>
+    <div class="form-group">
+    <label>Specialty</label>
+    <div style="flex: 1; min-width: 180px; position: relative;">
+        <select [(ngModel)]="currentDoctor.specialty" name="specialty"
+            (ngModelChange)="apptSearchDoctor=''; apptFilterSpecialty=''"
+            style="width: 100%; padding: 0.7rem 0.9rem; border: 1px solid var(--border-color);
+                   border-radius: 8px; font-family: inherit; font-size: 0.9rem;
+                   background: white; color: var(--text-main); cursor: pointer; appearance: auto;">
+            <option value="" disabled>🏥 All Specialties</option>
+            <option *ngFor="let sp of uniqueSpecialties" [value]="sp">{{ sp }}</option>
+        </select>
+    </div>
+</div>
       <div class="form-group">
         <label>Bio</label>
         <textarea name="bio" [(ngModel)]="currentDoctor.bio" rows="3"></textarea>
@@ -503,9 +512,9 @@
       </div>
       <div class="form-group">
         <label>Doctor Image</label>
-        <input type="text" name="image" [(ngModel)]="currentDoctor.image"
-          placeholder="e.g. https://example.com/photo.jpg  or  /assets/doctor.png"
-          style="width:100%; padding:0.75rem; border:1px solid #ddd; border-radius:4px; font-family:inherit;">
+        
+<input type="file" accept="image/*" (change)="onImageSelected($event)" />
+        
         <img *ngIf="currentDoctor.image" [src]="currentDoctor.image" alt="preview"
           style="margin-top:0.5rem; max-height:80px; border-radius:8px; object-fit:cover; display:block; border:1px solid #eee;">
       </div>
@@ -520,7 +529,7 @@
 <!-- Appointment Modal -->
 <div class="modal" *ngIf="showAppointmentModal">
   <div class="modal-content">
-    <h2 style="margin-top:0;">{{ isEditingAppointment ? 'Edit' : 'Add' }} Appointment</h2>
+    <h2 style="margin-top:0;">{{ isEditingAppointment ? 'Edit' : 'Add' }} Patient Reservations</h2>
     <form (ngSubmit)="saveAppointment()">
       <div class="form-group">
         <label>Patient Name</label>
@@ -609,15 +618,16 @@
         <textarea name="content" [(ngModel)]="currentNews.content" rows="5"></textarea>
       </div>
       <div class="form-group">
-        <label>News Image</label>
-
-<img *ngIf="currentNews.image" [src]="currentNews.image" class="img-preview" />
-
+  
 
 <img *ngIf="currentEvent.image"
      [src]="currentEvent.image"
      class="img-preview" />
     
+      </div>
+      <div class="form-group">
+        <label>News Image</label>
+<input type="file" accept="image/*" (change)="onImageSelected($event)" />
          
         <button type="button" (click)="showNewsModal = false" style="background:#ddd; color:#333; border:none; padding:0.5rem 1rem; border-radius:4px; cursor:pointer;">Cancel</button>
         <button type="submit" class="btn btn-primary">Save</button>

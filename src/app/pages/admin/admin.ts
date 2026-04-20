@@ -98,7 +98,15 @@ editingSlideIndex = -1; // -1 = adding new
   currentAppointment: any = {};
 
   showNewsModal = false;
-  currentNews: any = {};
+  currentNews: any = {
+    id: null,
+  title: '',
+  category: '',
+  date: '',
+  summary: '',
+  content: '',
+  image: '' 
+  };
 
   showEventModal = false;
   currentEvent: any = {};
@@ -166,6 +174,23 @@ saveHeroImage() {
   this.showHeroModal = false;
   this.cdr.detectChanges();
 } 
+onNewsImageSelected(event: any) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    this.showToast('Please select a valid image file', 'error');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    this.currentNews.image = reader.result as string; // base64
+    this.cdr.detectChanges();
+  };
+  reader.onerror = () => this.showToast('Failed to load image', 'error');
+  reader.readAsDataURL(file);
+}
 deleteHeroImage(index: number) {
   this.showConfirm('Delete this image?').then(ok => {
     if (!ok) return;

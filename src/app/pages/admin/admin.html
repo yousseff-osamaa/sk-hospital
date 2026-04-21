@@ -63,6 +63,7 @@
   <button class="admin-tab" [class.active]="activeSection==='chronic'"       (click)="setSection('chronic')">Chronic Requests</button>
   <button class="admin-tab" [class.active]="activeSection==='contact'"       (click)="setSection('contact')">Messages</button>
   <button class="admin-tab" [class.active]="activeSection==='slider'"        (click)="setSection('slider')">Photo Slider</button>
+  <button class="admin-tab" [class.active]="activeSection==='users'"         (click)="setSection('users')">Users Management</button>
 </div>
 
 <!-- ✅ Single hidden file input for hero images — always in DOM, outside any *ngIf -->
@@ -672,6 +673,50 @@
       </div>
     </div>
 
+    <!-- ===== USERS MANAGEMENT SECTION ===== -->
+    <div class="glass" *ngIf="activeSection==='users'" style="padding: 2rem; border-radius: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <h2 style="color: var(--primary); margin: 0;">Registered Users (Patients)</h2>
+            <button class="btn btn-primary" (click)="openUserModal()">+ Add New User</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <thead style="background: var(--primary-light); color: var(--primary-dark); text-align: left;">
+                    <tr>
+                        <th style="padding: 1rem;">Name</th>
+                        <th style="padding: 1rem;">Email</th>
+                        <th style="padding: 1rem;">Phone</th>
+                        <th style="padding: 1rem;">Status</th>
+                        <th style="padding: 1rem;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let user of users" style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 1rem; font-weight: 600; color: #1e293b;">
+                            {{ user.first_name }} {{ user.last_name }}
+                        </td>
+                        <td style="padding: 1rem; color: #64748b;">{{ user.email }}</td>
+                        <td style="padding: 1rem; color: #64748b;">{{ user.phone || 'N/A' }}</td>
+                        <td style="padding: 1rem;">
+                            <span class="badge-green" style="padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">Active</span>
+                        </td>
+                        <td style="padding: 1rem; display: flex; gap: 0.5rem;">
+                            <button class="btn-edit" (click)="openUserModal(user)" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">✏️ Edit</button>
+                            <button class="btn-danger" (click)="deleteUser(user.id)" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">🗑️ Delete</button>
+                        </td>
+                    </tr>
+                    <tr *ngIf="users.length === 0">
+                        <td colspan="5" style="padding: 3rem; text-align: center; color: #94a3b8;">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">👥</div>
+                            No users registered yet.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </section>
 </div>
 
@@ -947,4 +992,48 @@
       </div>
     </form>
   </div>
+</div>
+<!-- User Modal -->
+<div class="modal" *ngIf="showUserModal">
+    <div class="modal-content" style="max-width: 500px;">
+        <h2 style="margin-top: 0; color: var(--primary);">{{ currentUser.id ? 'Edit User' : 'Add New User' }}</h2>
+        <form (ngSubmit)="saveUser()">
+            <div style="display: flex; gap: 1rem;">
+                <div class="form-group" style="flex: 1;">
+                    <label>First Name</label>
+                    <input type="text" name="first_name" [(ngModel)]="currentUser.first_name" required placeholder="First Name">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Last Name</label>
+                    <input type="text" name="last_name" [(ngModel)]="currentUser.last_name" required placeholder="Last Name">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" name="email" [(ngModel)]="currentUser.email" required placeholder="email@example.com">
+            </div>
+
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="text" name="phone" [(ngModel)]="currentUser.phone" placeholder="+20 ...">
+            </div>
+
+            <div class="form-group" *ngIf="!currentUser.id">
+                <label>Password</label>
+                <input type="password" name="password" [(ngModel)]="currentUser.password" required placeholder="••••••••">
+                <small style="color: #64748b; font-size: 0.75rem;">Password is required for new users.</small>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="button" (click)="showUserModal = false"
+                    style="flex: 1; background: #f1f5f9; color: #475569; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 0.75rem;">
+                    {{ currentUser.id ? 'Update User' : 'Create User' }}
+                </button>
+            </div>
+        </form>
+    </div>
 </div>

@@ -221,14 +221,14 @@ updateChronicStatus(id: number, status: 'Approved' | 'Rejected') {
         return JSON.parse(localStorage.getItem('portalProfiles') || '[]');
     }
 
-    private upsertProfile(profile: { firstName: string; lastName: string; email: string; phone: string }) {
+    private upsertProfile(profile: { first_name: string; last_name: string; email: string; phone: string }) {
         const profiles = this.readProfiles();
-        const first = profile.firstName.trim().toLowerCase();
-        const last  = profile.lastName.trim().toLowerCase();
+        const first = profile.first_name.trim().toLowerCase();
+        const last  = profile.last_name.trim().toLowerCase();
         const idx = profiles.findIndex(
             (p: any) =>
-                (p.firstName ?? '').trim().toLowerCase() === first &&
-                (p.lastName  ?? '').trim().toLowerCase() === last
+                (p.first_name ?? '').trim().toLowerCase() === first &&
+                (p.last_name  ?? '').trim().toLowerCase() === last
         );
         if (idx > -1) {
             profiles[idx] = { ...profiles[idx], ...profile };
@@ -256,7 +256,7 @@ updateChronicStatus(id: number, status: 'Approved' | 'Rejected') {
             redirect_url: `${environment.frontendUrl}/verify-email`,
         }).subscribe({
             next: () => {
-                this.upsertProfile({ firstName: first, lastName: last, email, phone });
+                this.upsertProfile({ first_name: first, last_name: last, email, phone });
                 this.showToast('Account created! Check your email to verify, then log in.', 'success');
                 this.viewState = 'login';
             },
@@ -289,7 +289,7 @@ updateChronicStatus(id: number, status: 'Approved' | 'Rejected') {
         this.authService.login(email, password).subscribe({
             next: (tokens) => {
                 const userData = {
-                    name:  `${profile.firstName} ${profile.lastName}`.trim(),
+                    name:  `${profile.first_name} ${profile.last_name}`.trim(),
                     email: profile.email,
                     phone: profile.phone ?? '',
                 };

@@ -83,6 +83,9 @@ export class Admin implements OnInit {
   currentSlide: ScheduleSlide = { src: '', alt: '' };
   editingSlideIndex = -1; // -1 = adding new
   chronicRequests: any[] = [];
+  users: any[] = [];
+  showUserModal = false;
+  currentUser: any = {};
 
   // ---- Lightbox for chronic document viewer ----
   lightboxVisible = false;
@@ -403,6 +406,7 @@ export class Admin implements OnInit {
     | 'contact'
     | 'schedules'
     | 'slider'
+    | 'users'
     = 'doctors';
 
   // ---- Doctor list filter (in Doctors tab) ----
@@ -619,7 +623,8 @@ export class Admin implements OnInit {
 
   loadData() {
     this.loadScheduleSlides();
-    this.loadHeroSlides(); // ✅ add this if missing
+    this.loadHeroSlides(); 
+    this.loadUsers();
 
     // ✅ Load once (was duplicated 3 times)
     this.patientRequests = JSON.parse(localStorage.getItem('portalRequests') || '[]');
@@ -1069,6 +1074,70 @@ export class Admin implements OnInit {
       };
     }
     this.showEventModal = true;
+  }
+
+  // ================= USERS =================
+  loadUsers() {
+    this.users = JSON.parse(localStorage.getItem('portalProfiles') || '[]');
+    this.cdr.detectChanges();
+  }
+
+  openUserModal(user?: any) {
+    if (user) {
+      this.currentUser = { ...user };
+    } else {
+      this.currentUser = { first_name: '', last_name: '', email: '', phone: '', password: '' };
+    }
+    this.showUserModal = true;
+  }
+
+  saveUser() {
+    const allUsers = JSON.parse(localStorage.getItem('portalProfiles') || '[]');
+    const isEdit = !!this.currentUser.id;
+    
+    if (isEdit) {
+      // Edit local
+      const idx = allUsers.findIndex((u: any) => u.id === this.currentUser.id || u.email === this.currentUser.email);
+      if (idx > -1) {
+        allUsers[idx] = { ...this.currentUser };
+      }
+    } else {
+      // Add local
+      this.currentUser.id = Date.now();
+      allUsers.push({ ...this.currentUser });
+    }
+
+    localStorage.setItem('portalProfiles', JSON.stringify(allUsers));
+    this.showToast(isEdit ? 'User updated!' : 'User created!', 'success');
+    this.showUserModal = false;
+    this.loadUsers();
+
+    // --- Backend Sync ---
+    const url = isEdit ? `${this.apiBase}/users/${this.currentUser.id}/update/` : `${this.apiBase}/register/`;
+    const method = isEdit ? 'put' : 'post';
+    this.http.request(method, url, { body: this.currentUser }).subscribe({
+      next: () => console.log('BE sync success'),
+      error: (err) => console.error('BE sync failed', err)
+    });
+  }
+
+  deleteUser(userId: any) {
+    this.showConfirm('Are you sure you want to delete this user? They will no longer be able to log in.').then(ok => {
+      if (!ok) return;
+      
+      // Local Delete
+      const allUsers = JSON.parse(localStorage.getItem('portalProfiles') || '[]');
+      const filtered = allUsers.filter((u: any) => u.id !== userId && u.email !== userId);
+      localStorage.setItem('portalProfiles', JSON.stringify(filtered));
+      this.showToast('User deleted successfully', 'success');
+      this.loadUsers();
+
+      // Backend Sync
+      this.http.delete(`${this.apiBase}/users/${userId}/delete/`).subscribe({
+        next: () => console.log('BE delete success'),
+        error: (err) => console.error('BE delete failed', err)
+      });
+    });
   }
 
   saveEvent() {

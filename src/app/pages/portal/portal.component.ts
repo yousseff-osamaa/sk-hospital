@@ -289,7 +289,7 @@ updateChronicStatus(id: number, status: 'Approved' | 'Rejected') {
         this.authService.login(email, password).subscribe({
             next: (tokens) => {
                 const userData = {
-                    name:  `${profile.first_name} ${profile.last_name}`.trim(),
+                    name:  (`${profile.first_name || profile.firstName || ''} ${profile.last_name || profile.lastName || ''}`).trim(),
                     email: profile.email,
                     phone: profile.phone ?? '',
                 };

@@ -57,7 +57,7 @@
       <ng-container *ngIf="isPatient && !isAdmin">
         <div class="user-pill">
           <span class="user-name">
-            <i data-lucide="user"></i> {{ currentUser?.name?.split(' ')[0] }}
+            <i data-lucide="user"></i> {{ currentUser?.name?.split(' ')[0] || 'User' }}
           </span>
           <button (click)="logout()" class="btn-logout-small">
             <i data-lucide="log-out"></i>

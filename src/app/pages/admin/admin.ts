@@ -7,6 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { EventsService } from '../../services/events.service';
 import { ScheduleSlide } from '../schedules/schedules.component';
+import { HospitalEvent } from '../events/events.component';
 
 @Component({
   selector: 'app-admin',
@@ -24,7 +25,7 @@ import { ScheduleSlide } from '../schedules/schedules.component';
     .btn-edit:hover { background: #ca8a04; }
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
     .modal-content { background: white; padding: 2rem; border-radius: 12px; width: 520px; max-width: 90%; max-height: 90vh; overflow-y: auto; }
-    .form-group { margin-bottom: 1rem; text-align: left; }
+.form-group { margin-bottom: 1rem; text-align: left; }
     .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;}
     .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-family: inherit;}
     .admin-grid { display: grid; grid-template-columns: 1fr; gap: 3rem; }
@@ -69,7 +70,7 @@ import { ScheduleSlide } from '../schedules/schedules.component';
 })
 
 export class Admin implements OnInit {
-  
+
 
   patientRequests: any[] = [];
   contactMessages: any[] = [];
@@ -78,9 +79,9 @@ export class Admin implements OnInit {
   news: any[] = [];
   eventsList: any[] = [];
   scheduleSlides: ScheduleSlide[] = [];
-showScheduleModal = false;
-currentSlide: ScheduleSlide = { src: '', alt: '' };
-editingSlideIndex = -1; // -1 = adding new
+  showScheduleModal = false;
+  currentSlide: ScheduleSlide = { src: '', alt: '' };
+  editingSlideIndex = -1; // -1 = adding new
   chronicRequests: any[] = [];
 
   // ---- Lightbox for chronic document viewer ----
@@ -100,12 +101,12 @@ editingSlideIndex = -1; // -1 = adding new
   showNewsModal = false;
   currentNews: any = {
     id: null,
-  title: '',
-  category: '',
-  date: '',
-  summary: '',
-  content: '',
-  image: '' 
+    title: '',
+    category: '',
+    date: '',
+    summary: '',
+    content: '',
+    image: ''
   };
 
   showEventModal = false;
@@ -115,66 +116,84 @@ editingSlideIndex = -1; // -1 = adding new
   loginData = { username: '', password: '' };
   loginError = '';
   heroSlides: string[] = [];
-showHeroModal = false;
-currentHeroImage: string = '';
-editingHeroIndex = -1;
-defaultHeroImages: any;
+  showHeroModal = false;
+  currentHeroImage: string = '';
+  editingHeroIndex = -1;
 
-loadHeroSlides() {
-  const stored = localStorage.getItem('heroImages');
-  this.heroSlides = stored ? JSON.parse(stored) : [];
-  this.cdr.detectChanges();
-}
-openHeroModal(image: string = '', index: number = -1) {
-  this.currentHeroImage = image;
-  this.editingHeroIndex = index;
-  this.showHeroModal = true;
-}
-// ✅ This stays ONLY in admin.component.ts
-onHeroImageSelected(event: any) {
-  const file = event.target.files?.[0];
-  if (!file) return;
+  private readonly DEFAULT_HERO_IMAGES = [
+    '/hospital-building.jpg',
+    '/slider 3.jpeg',
+    '/slider 4.jpeg',
+    '/slider 6.jpeg'
+  ];
 
-  if (!file.type.startsWith('image/')) {
-    this.showToast('Please select a valid image file', 'error');
-    return;
-  }
+  private readonly DEFAULT_SCHEDULE_SLIDES: ScheduleSlide[] = [
+    { src: '/doc1.jpg', alt: 'جدول مواعيد عيادات الجراحة والقلب — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/doc2.jpg', alt: 'جدول مواعيد عيادات العظام والجلدية — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/doc3.jpg', alt: 'جدول مواعيد عيادات الباطنة والأطفال — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/doc4.jpg', alt: 'جدول مواعيد الطوارئ والخدمات العاجلة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/doc5.jpg', alt: 'جدول مواعيد العيادات التخصصية — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/doc6.jpg', alt: 'جدول مواعيد العيادات التخصصية — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/doc7.jpg', alt: 'جدول مواعيد العيادات التخصصية — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-01.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-02.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-03.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-04.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-05.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-06.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-07.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-08.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-09.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-10.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-11.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-12.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-13.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-14.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-15.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' },
+    { src: '/assets/schedules/schedule-16.png', alt: 'جدول مواعيد عيادة — مستشفى سُعاد كفافي الجامعي' }
+  ];
 
-  const reader = new FileReader();
+  loadHeroSlides() {
+    const stored = localStorage.getItem('heroImages');
+    let slides = [];
+    try {
+      slides = stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      slides = [];
+    }
 
-  reader.onload = () => {
-    this.currentHeroImage = reader.result as string; // ✅ THIS LINE WAS MISSING
+    if (slides.length === 0) {
+      this.heroSlides = [...this.DEFAULT_HERO_IMAGES];
+      localStorage.setItem('heroImages', JSON.stringify(this.heroSlides));
+    } else {
+      this.heroSlides = slides;
+    }
     this.cdr.detectChanges();
-  };
-
-  reader.onerror = () => this.showToast('Failed to load image', 'error');
-  reader.readAsDataURL(file);
-}
-saveHeroImage() {
-  if (!this.currentHeroImage) {
-    this.showToast('Please upload an image', 'warning');
-    return;
+  }
+  openHeroModal(image: string = '', index: number = -1) {
+    this.currentHeroImage = image;
+    this.editingHeroIndex = index;
+    this.showHeroModal = true;
   }
 
-  const all = [...this.heroSlides];
-
-  if (this.editingHeroIndex > -1) {
-    // ✏️ EDIT
-    all[this.editingHeroIndex] = this.currentHeroImage;
-    this.showToast('Image updated!', 'success');
-  } else {
-    // 🆕 ADD NEW (NEWEST FIRST)
-    all.unshift(this.currentHeroImage);
-    this.showToast('Image added!', 'success');
+  resetHeroDefaults() {
+    if (confirm('Are you sure you want to reset hero images to default?')) {
+      this.heroSlides = [...this.DEFAULT_HERO_IMAGES];
+      localStorage.setItem('heroImages', JSON.stringify(this.heroSlides));
+      this.showToast('Hero images reset!', 'success');
+    }
   }
 
-  localStorage.setItem('heroImages', JSON.stringify(all));
+  resetScheduleDefaults() {
+    if (confirm('Are you sure you want to reset schedule slides to default?')) {
+      this.scheduleSlides = [...this.DEFAULT_SCHEDULE_SLIDES];
+      localStorage.setItem('scheduleSlides', JSON.stringify(this.scheduleSlides));
+      this.showToast('Schedules reset!', 'success');
+    }
+  }
 
-  this.heroSlides = all;
-  this.showHeroModal = false;
-  this.cdr.detectChanges();
-} 
-  onNewsImageSelected(event: any) {
+  // ✅ This stays ONLY in admin.component.ts
+  onHeroImageSelected(event: any) {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -184,12 +203,83 @@ saveHeroImage() {
     }
 
     const reader = new FileReader();
+
     reader.onload = () => {
-      this.currentNews.image = reader.result as string; // base64
+      this.currentHeroImage = reader.result as string; // ✅ THIS LINE WAS MISSING
       this.cdr.detectChanges();
     };
+
     reader.onerror = () => this.showToast('Failed to load image', 'error');
     reader.readAsDataURL(file);
+  }
+  saveHeroImage() {
+    if (!this.currentHeroImage) {
+      this.showToast('Please upload an image', 'warning');
+      return;
+    }
+
+    const all = [...this.heroSlides];
+
+    if (this.editingHeroIndex > -1) {
+      // ✏️ EDIT
+      all[this.editingHeroIndex] = this.currentHeroImage;
+      this.showToast('Image updated!', 'success');
+    } else {
+      // 🆕 ADD NEW (NEWEST FIRST)
+      all.unshift(this.currentHeroImage);
+      this.showToast('Image added!', 'success');
+    }
+
+    localStorage.setItem('heroImages', JSON.stringify(all));
+    this.heroSlides = all;
+    this.showHeroModal = false;
+    this.cdr.detectChanges();
+  }
+
+  moveHeroImage(index: number, direction: 'up' | 'down') {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= this.heroSlides.length) return;
+
+    const arr = [...this.heroSlides];
+    const temp = arr[index];
+    arr[index] = arr[newIndex];
+    arr[newIndex] = temp;
+
+    this.heroSlides = arr;
+    localStorage.setItem('heroImages', JSON.stringify(arr));
+    this.cdr.detectChanges();
+    this.showToast('Order updated!', 'success');
+  }
+
+  onNewsImageSelected(event: any) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    if (!this.currentNews.images) this.currentNews.images = [];
+
+    Array.from(files).forEach((file: any) => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const res = reader.result as string;
+          this.currentNews.images.push(res);
+          // Set first image as primary if none exists
+          if (!this.currentNews.image) this.currentNews.image = res;
+          this.cdr.detectChanges();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  removeNewsImage(index: number) {
+    if (this.currentNews.images) {
+      this.currentNews.images.splice(index, 1);
+      if (this.currentNews.image && !this.currentNews.images.includes(this.currentNews.image)) {
+        this.currentNews.image = this.currentNews.images[0] || '';
+      }
+      this.cdr.detectChanges();
+    }
   }
 
   onDoctorImageSelected(event: any) {
@@ -209,23 +299,23 @@ saveHeroImage() {
     reader.onerror = () => this.showToast('Failed to load image', 'error');
     reader.readAsDataURL(file);
   }
-deleteHeroImage(index: number) {
-  this.showConfirm('Delete this image?').then(ok => {
-    if (!ok) return;
+  deleteHeroImage(index: number) {
+    this.showConfirm('Delete this image?').then(ok => {
+      if (!ok) return;
 
-    const updated = this.heroSlides.filter((_, i) => i !== index);
+      const updated = this.heroSlides.filter((_, i) => i !== index);
 
-    localStorage.setItem('heroImages', JSON.stringify(updated));
+      localStorage.setItem('heroImages', JSON.stringify(updated));
 
-    this.heroSlides = updated;
-    this.cdr.detectChanges();
+      this.heroSlides = updated;
+      this.cdr.detectChanges();
 
-    this.showToast('Deleted successfully!', 'success');
-  });
-}
+      this.showToast('Deleted successfully!', 'success');
+    });
+  }
 
   // ---- Toast / Popup system ----
-  toasts: { id: number; msg: string; type: 'success'|'error'|'warning'; icon: string }[] = [];
+  toasts: { id: number; msg: string; type: 'success' | 'error' | 'warning'; icon: string }[] = [];
   private toastCounter = 0;
 
   // ---- Confirm dialog ----
@@ -236,18 +326,35 @@ deleteHeroImage(index: number) {
   // ---- Appointment filter ----
   apptSearchDoctor = '';
   apptFilterSpecialty = '';
-onImageSelected(event: any) {
-  const file = event.target.files[0];
-  if (!file) return;
+  onImageSelected(event: any) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-  const reader = new FileReader();
+    if (!this.currentEvent.images) this.currentEvent.images = [];
 
-  reader.onload = () => {
-    this.currentEvent.image = reader.result as string; 
-  };
+    Array.from(files).forEach((file: any) => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const res = reader.result as string;
+          this.currentEvent.images.push(res);
+          if (!this.currentEvent.image) this.currentEvent.image = res;
+          this.cdr.detectChanges();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
 
-  reader.readAsDataURL(file);
-}
+  removeEventImage(index: number) {
+    if (this.currentEvent.images) {
+      this.currentEvent.images.splice(index, 1);
+      if (this.currentEvent.image && !this.currentEvent.images.includes(this.currentEvent.image)) {
+        this.currentEvent.image = this.currentEvent.images[0] || '';
+      }
+      this.cdr.detectChanges();
+    }
+  }
 
   // get specialties(): string[] {
   //   const s = new Set(this.doctors.map(d => d.specialty).filter(Boolean));
@@ -256,7 +363,7 @@ onImageSelected(event: any) {
   get specialties(): string[] {
     const s = new Set(this.doctors.map(d => d.specialty).filter(Boolean));
     return Array.from(s);
-}
+  }
   get filteredDoctors(): Doctor[] {
     const q = this.apptSearchDoctor.toLowerCase();
     return this.doctors.filter(d =>
@@ -286,22 +393,22 @@ onImageSelected(event: any) {
   }
 
   // ---- Active admin section tab ----
-activeSection:
-  | 'doctors'
-  | 'appointments'
-  | 'news'
-  | 'events'
-  | 'patients'
-  | 'chronic'
-  | 'contact'
-  | 'schedules'
-  | 'slider'
-  = 'doctors';
+  activeSection:
+    | 'doctors'
+    | 'appointments'
+    | 'news'
+    | 'events'
+    | 'patients'
+    | 'chronic'
+    | 'contact'
+    | 'schedules'
+    | 'slider'
+    = 'doctors';
 
   // ---- Doctor list filter (in Doctors tab) ----
   docSearch = '';
   docFilterSpecialty = '';
-readonly SPECIALTIES = [
+  readonly SPECIALTIES = [
     'أمراض القلب والأوعية الدموية',
     'أمراض الجلدية',
     'طب الطوارئ',
@@ -328,13 +435,13 @@ readonly SPECIALTIES = [
     'طب الأسنان',
     'التغذية العلاجية',
     'العلاج الطبيعي وإعادة التأهيل'
-];
+  ];
 
-get uniqueSpecialties(): string[] {
+  get uniqueSpecialties(): string[] {
     const fromDoctors = this.doctors.map(d => d.specialty).filter(Boolean);
     const merged = new Set([...this.SPECIALTIES, ...fromDoctors]);
     return Array.from(merged).sort();
-}
+  }
   get filteredDoctorList(): Doctor[] {
     return this.doctors.filter(d => {
       const matchSpec = !this.docFilterSpecialty || d.specialty === this.docFilterSpecialty;
@@ -357,26 +464,26 @@ get uniqueSpecialties(): string[] {
     private eventsService: EventsService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private zone: NgZone 
-  ) {}
-  
-ngOnInit() {
+    private zone: NgZone
+  ) { }
+
+  ngOnInit() {
     const sessionAuth = sessionStorage.getItem('isAdminLoggedIn');
     if (sessionAuth === 'true') {
-        this.isAdminLoggedIn = true;
-        setTimeout(() => this.loadData(), 0);
+      this.isAdminLoggedIn = true;
+      setTimeout(() => this.loadData(), 0);
     }
 
     // ✅ Listen for patient cancellations from other tabs
     window.addEventListener('storage', (event: StorageEvent) => {
-        if (event.key === 'adminRefreshFlag' && this.isAdminLoggedIn) {
-            this.zone.run(() => {
-                this.loadData();
-                this.showToast('A patient cancelled an appointment.', 'warning');
-            });
-        }
+      if (event.key === 'adminRefreshFlag' && this.isAdminLoggedIn) {
+        this.zone.run(() => {
+          this.loadData();
+          this.showToast('A patient cancelled an appointment.', 'warning');
+        });
+      }
     });
-}
+  }
 
   goToDashboard() {
     this.router.navigate(['/']);
@@ -418,157 +525,192 @@ ngOnInit() {
     this.router.navigate(['/']);
   }
   // ================= SCHEDULES =================
-loadScheduleSlides() {
+  loadScheduleSlides() {
     const stored = localStorage.getItem('scheduleSlides');
-    this.scheduleSlides = stored
-        ? JSON.parse(stored)
-        : []; // admin sees only what's stored
-    this.cdr.detectChanges();
-}
+    let slides = [];
+    try {
+      slides = stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      slides = [];
+    }
 
-openSlideModal(slide?: ScheduleSlide, index = -1) {
+    if (slides.length === 0) {
+      this.scheduleSlides = [...this.DEFAULT_SCHEDULE_SLIDES];
+      localStorage.setItem('scheduleSlides', JSON.stringify(this.scheduleSlides));
+    } else {
+      this.scheduleSlides = slides;
+    }
+    this.cdr.detectChanges();
+  }
+
+  openSlideModal(slide?: ScheduleSlide, index = -1) {
     this.editingSlideIndex = index;
     this.currentSlide = slide
-        ? { ...slide }
-        : { src: '', alt: '' };
+      ? { ...slide }
+      : { src: '', alt: '' };
     this.showScheduleModal = true;
-}
+  }
 
-onSlideImageSelected(event: any) {
+  onSlideImageSelected(event: any) {
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (e: any) => {
-        this.currentSlide.src = e.target.result;
-        this.cdr.detectChanges();
+      this.currentSlide.src = e.target.result;
+      this.cdr.detectChanges();
     };
     reader.readAsDataURL(file);
-}
+  }
 
-saveSlide() {
+  saveSlide() {
     if (!this.currentSlide.src) {
-        this.showToast('Please upload an image.', 'warning');
-        return;
+      this.showToast('Please upload an image.', 'warning');
+      return;
     }
     const all = [...this.scheduleSlides];
     if (this.editingSlideIndex > -1) {
-        all[this.editingSlideIndex] = { ...this.currentSlide };
-        this.showToast('Schedule updated!', 'success');
+      all[this.editingSlideIndex] = { ...this.currentSlide };
+      this.showToast('Schedule updated!', 'success');
     } else {
-        all.push({ ...this.currentSlide });
-        this.showToast('Schedule added!', 'success');
+      all.push({ ...this.currentSlide });
+      this.showToast('Schedule added!', 'success');
     }
     localStorage.setItem('scheduleSlides', JSON.stringify(all));
     this.scheduleSlides = all;
     this.showScheduleModal = false;
     this.cdr.detectChanges();
-}
+  }
 
-deleteSlide(index: number) {
-    this.showConfirm('Delete this schedule image?').then(ok => {
-        if (!ok) return;
-        const all = this.scheduleSlides.filter((_, i) => i !== index);
-        localStorage.setItem('scheduleSlides', JSON.stringify(all));
-        this.scheduleSlides = all;
-        this.cdr.detectChanges();
-        this.showToast('Schedule deleted!', 'success');
-    });
-}
+  moveScheduleSlide(index: number, direction: 'up' | 'down') {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= this.scheduleSlides.length) return;
 
-loadData() {
-  this.loadScheduleSlides();
-  this.loadHeroSlides(); // ✅ add this if missing
+    const arr = [...this.scheduleSlides];
+    const temp = arr[index];
+    arr[index] = arr[newIndex];
+    arr[newIndex] = temp;
 
-  // ✅ Load once (was duplicated 3 times)
-  this.patientRequests = JSON.parse(localStorage.getItem('portalRequests') || '[]');
-  this.contactMessages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
-  this.loadChronicRequests();
-  this.loadNews();
-  this.loadAdminEvents();
-
-  // ✅ MERGE API appointments + localStorage appointments
-  this.http.get<any[]>(`${this.apiBase}/appointments/`).subscribe({
-    next: (apiData: any[]) => {
-      const localData: any[] = JSON.parse(
-        localStorage.getItem('patientAppointments') || '[]'
-      );
-
-      // Merge: avoid duplicates by checking a unique field (e.g. id or timestamp)
-      const merged = [...apiData];
-      for (const local of localData) {
-        const alreadyExists = merged.some(
-          a => a.id === local.id || 
-               (a.name === local.name && a.date === local.date && a.doctor === local.doctor)
-        );
-        if (!alreadyExists) merged.push(local);
-      }
-
-      this.patientAppointments = merged;
-      this.cdr.detectChanges();
-    },
-    error: () => {
-      // API failed — fall back to localStorage only
-      this.patientAppointments = JSON.parse(
-        localStorage.getItem('patientAppointments') || '[]'
-      );
-      this.cdr.detectChanges();
-    }
-  });
-
-  this.doctorService.getDoctorsFromApi().subscribe((doctors: Doctor[]) => {
-    this.doctors = doctors;
+    this.scheduleSlides = arr;
+    localStorage.setItem('scheduleSlides', JSON.stringify(arr));
     this.cdr.detectChanges();
-  });
+    this.showToast('Order updated!', 'success');
+  }
 
-  this.cdr.detectChanges();
-}
+  deleteSlide(index: number) {
+    this.showConfirm('Delete this schedule image?').then(ok => {
+      if (!ok) return;
+      const all = this.scheduleSlides.filter((_, i) => i !== index);
+      localStorage.setItem('scheduleSlides', JSON.stringify(all));
+      this.scheduleSlides = all;
+      this.cdr.detectChanges();
+      this.showToast('Schedule deleted!', 'success');
+    });
+  }
+
+  deleteContactMessage(index: number) {
+    this.showConfirm('Delete this message?').then(ok => {
+      if (!ok) return;
+      this.contactMessages.splice(index, 1);
+      localStorage.setItem('contactMessages', JSON.stringify(this.contactMessages));
+      this.cdr.detectChanges();
+      this.showToast('Message deleted!', 'success');
+    });
+  }
+
+  loadData() {
+    this.loadScheduleSlides();
+    this.loadHeroSlides(); // ✅ add this if missing
+
+    // ✅ Load once (was duplicated 3 times)
+    this.patientRequests = JSON.parse(localStorage.getItem('portalRequests') || '[]');
+    this.contactMessages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
+    this.loadChronicRequests();
+    this.loadNews();
+    this.loadAdminEvents();
+
+    // ✅ MERGE API appointments + localStorage appointments
+    this.http.get<any[]>(`${this.apiBase}/appointments/`).subscribe({
+      next: (apiData: any[]) => {
+        const localData: any[] = JSON.parse(
+          localStorage.getItem('patientAppointments') || '[]'
+        );
+
+        // Merge: avoid duplicates by checking a unique field (e.g. id or timestamp)
+        const merged = [...apiData];
+        for (const local of localData) {
+          const alreadyExists = merged.some(
+            a => a.id === local.id ||
+              (a.name === local.name && a.date === local.date && a.doctor === local.doctor)
+          );
+          if (!alreadyExists) merged.push(local);
+        }
+
+        this.patientAppointments = merged;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // API failed — fall back to localStorage only
+        this.patientAppointments = JSON.parse(
+          localStorage.getItem('patientAppointments') || '[]'
+        );
+        this.cdr.detectChanges();
+      }
+    });
+
+    this.doctorService.getDoctorsFromApi().subscribe((doctors: Doctor[]) => {
+      this.doctors = doctors;
+      this.cdr.detectChanges();
+    });
+
+    this.cdr.detectChanges();
+  }
 
   loadChronicRequests() {
     this.chronicRequests = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
     this.cdr.detectChanges();
-}
-// ✅ This stays ONLY in admin.component.ts
+  }
+  // ✅ This stays ONLY in admin.component.ts
 
-updateChronicStatus(req: any, newStatus: string) {
+  updateChronicStatus(req: any, newStatus: string) {
     const all: any[] = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
     const idx = all.findIndex((r: any) => r.id === req.id);
     if (idx > -1) {
-        all[idx].status = newStatus;
-        all[idx].reviewedAt = new Date().toLocaleDateString();
-        localStorage.setItem('chronicRequests', JSON.stringify(all));
-        this.chronicRequests = all;
-        this.cdr.detectChanges();
-        this.showToast(`Status updated to ${newStatus}`, 'success');
+      all[idx].status = newStatus;
+      all[idx].reviewedAt = new Date().toLocaleDateString();
+      localStorage.setItem('chronicRequests', JSON.stringify(all));
+      this.chronicRequests = all;
+      this.cdr.detectChanges();
+      this.showToast(`Status updated to ${newStatus}`, 'success');
     } else {
-        this.showToast('Request not found.', 'error');
+      this.showToast('Request not found.', 'error');
     }
-}
-deleteChronicRequest(req: any) {
+  }
+  deleteChronicRequest(req: any) {
     this.showConfirm(`Delete request for "${req.medName}"?`).then(ok => {
-        if (!ok) return;
-        const all: any[] = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
-        const updated = all.filter((r: any) => r.id !== req.id);
-        localStorage.setItem('chronicRequests', JSON.stringify(updated));
-        this.chronicRequests = updated;
-        this.cdr.detectChanges();
-        this.showToast('Request deleted.', 'success');
+      if (!ok) return;
+      const all: any[] = JSON.parse(localStorage.getItem('chronicRequests') || '[]');
+      const updated = all.filter((r: any) => r.id !== req.id);
+      localStorage.setItem('chronicRequests', JSON.stringify(updated));
+      this.chronicRequests = updated;
+      this.cdr.detectChanges();
+      this.showToast('Request deleted.', 'success');
     });
-}
+  }
 
   // ---- Lightbox ----
   openLightbox(files: any[], startIndex = 0) {
     this.lightboxFiles = files;
     this.lightboxIndex = startIndex;
-    this.lightboxUrl      = files[startIndex]?.file_url || files[startIndex]?.url || '';
+    this.lightboxUrl = files[startIndex]?.file_url || files[startIndex]?.url || '';
     this.lightboxFilename = files[startIndex]?.filename || `Document ${startIndex + 1}`;
-    this.lightboxVisible  = true;
+    this.lightboxVisible = true;
     this.cdr.detectChanges();
   }
 
   lightboxNext() {
     if (this.lightboxIndex < this.lightboxFiles.length - 1) {
       this.lightboxIndex++;
-      this.lightboxUrl      = this.lightboxFiles[this.lightboxIndex]?.file_url || '';
+      this.lightboxUrl = this.lightboxFiles[this.lightboxIndex]?.file_url || '';
       this.lightboxFilename = this.lightboxFiles[this.lightboxIndex]?.filename || '';
       this.cdr.detectChanges();
     }
@@ -577,7 +719,7 @@ deleteChronicRequest(req: any) {
   lightboxPrev() {
     if (this.lightboxIndex > 0) {
       this.lightboxIndex--;
-      this.lightboxUrl      = this.lightboxFiles[this.lightboxIndex]?.file_url || '';
+      this.lightboxUrl = this.lightboxFiles[this.lightboxIndex]?.file_url || '';
       this.lightboxFilename = this.lightboxFiles[this.lightboxIndex]?.filename || '';
       this.cdr.detectChanges();
     }
@@ -616,17 +758,33 @@ deleteChronicRequest(req: any) {
   openDoctorModal(doctor?: Doctor) {
     if (doctor) {
       this.currentDoctor = { ...doctor };
+      // Attempt to parse next_slot if it follows a specific format, otherwise leave blank
+      // or just let the user set it fresh.
+      if (doctor.next_slot && doctor.next_slot.includes(' at ')) {
+        const parts = doctor.next_slot.split(' at ');
+        this.currentDoctor.next_date = parts[0];
+        this.currentDoctor.next_time = parts[1];
+      }
     } else {
       this.currentDoctor = {
         name: '', specialty: '', bio: '', image: '',
-        schedule: '', available: true,
-        next_slot: 'الآن', queue_length: 0
+        schedule: new Date().toISOString().split('T')[0], // Default to today's date
+        available: true,
+        next_slot: 'الآن', queue_length: 0,
+        // Initialize with today's date and current time for new doctors
+        next_date: new Date().toISOString().split('T')[0],
+        next_time: '09:00'
       };
     }
     this.showDoctorModal = true;
   }
 
   saveDoctor() {
+    // Combine date and time into next_slot if they are provided
+    if (this.currentDoctor.next_date && this.currentDoctor.next_time) {
+      this.currentDoctor.next_slot = `${this.currentDoctor.next_date} at ${this.currentDoctor.next_time}`;
+    }
+
     const onSuccess = () => {
       this.doctorService.getDoctorsFromApi().subscribe((d: Doctor[]) => { this.doctors = d; this.cdr.detectChanges(); });
       this.showDoctorModal = false;
@@ -702,60 +860,60 @@ deleteChronicRequest(req: any) {
   //     });
   //   });
   // }
-// deleteAppointment(id: any) {
-//     this.showConfirm('Delete this appointment?').then(ok => {
-//         if (!ok) return;
+  // deleteAppointment(id: any) {
+  //     this.showConfirm('Delete this appointment?').then(ok => {
+  //         if (!ok) return;
 
-//         // ✅ Find by id BEFORE deleting from API — use the correct array name
-//         const target = this.patientAppointments.find((a: any) => a.id === id);
-//         const refId  = target?.reference_id ?? target?.id;
+  //         // ✅ Find by id BEFORE deleting from API — use the correct array name
+  //         const target = this.patientAppointments.find((a: any) => a.id === id);
+  //         const refId  = target?.reference_id ?? target?.id;
 
-//         this.http.delete(`${this.apiBase}/appointments/${id}/delete/`).subscribe({
-//             next: () => {
-//                 // ✅ Remove from localStorage by BOTH numeric id AND SKH-XXXX reference
-//                 const existing: any[] = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
-//                 const updated = existing.filter((a: any) =>
-//                     a.id !== id &&
-//                     a.id !== refId &&
-//                     a.id !== String(id) &&
-//                     a.id !== String(refId)
-//                 );
-//                 localStorage.setItem('patientAppointments', JSON.stringify(updated));
+  //         this.http.delete(`${this.apiBase}/appointments/${id}/delete/`).subscribe({
+  //             next: () => {
+  //                 // ✅ Remove from localStorage by BOTH numeric id AND SKH-XXXX reference
+  //                 const existing: any[] = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
+  //                 const updated = existing.filter((a: any) =>
+  //                     a.id !== id &&
+  //                     a.id !== refId &&
+  //                     a.id !== String(id) &&
+  //                     a.id !== String(refId)
+  //                 );
+  //                 localStorage.setItem('patientAppointments', JSON.stringify(updated));
 
-//                 this.loadData();
-//                 this.showToast('Appointment deleted!', 'success');
-//             },
-//             error: (err: any) => this.showToast('Error: ' + JSON.stringify(err.error), 'error')
-//         });
-//     });
-// }
-deleteAppointment(id: any) {
+  //                 this.loadData();
+  //                 this.showToast('Appointment deleted!', 'success');
+  //             },
+  //             error: (err: any) => this.showToast('Error: ' + JSON.stringify(err.error), 'error')
+  //         });
+  //     });
+  // }
+  deleteAppointment(id: any) {
     this.showConfirm('Delete this appointment?').then(ok => {
-        if (!ok) return;
+      if (!ok) return;
 
-        // Try backend first, always remove from localStorage regardless
-        const removeLocally = () => {
-            const existing: any[] = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
-            const updated = existing.filter((a: any) =>
-                a.id !== id &&
-                a.id !== String(id)
-            );
-            localStorage.setItem('patientAppointments', JSON.stringify(updated));
+      // Try backend first, always remove from localStorage regardless
+      const removeLocally = () => {
+        const existing: any[] = JSON.parse(localStorage.getItem('patientAppointments') || '[]');
+        const updated = existing.filter((a: any) =>
+          a.id !== id &&
+          a.id !== String(id)
+        );
+        localStorage.setItem('patientAppointments', JSON.stringify(updated));
 
-            // Remove from displayed list immediately
-            this.patientAppointments = this.patientAppointments.filter((a: any) =>
-                a.id !== id && a.id !== String(id)
-            );
-            this.cdr.detectChanges();
-            this.showToast('Appointment deleted!', 'success');
-        };
+        // Remove from displayed list immediately
+        this.patientAppointments = this.patientAppointments.filter((a: any) =>
+          a.id !== id && a.id !== String(id)
+        );
+        this.cdr.detectChanges();
+        this.showToast('Appointment deleted!', 'success');
+      };
 
-        this.http.delete(`${this.apiBase}/appointments/${id}/delete/`).subscribe({
-            next: () => removeLocally(),
-            error: () => removeLocally()  // ← delete locally even if backend fails
-        });
+      this.http.delete(`${this.apiBase}/appointments/${id}/delete/`).subscribe({
+        next: () => removeLocally(),
+        error: () => removeLocally()  // ← delete locally even if backend fails
+      });
     });
-}
+  }
   // ================= NEWS =================
   // loadNews() {
   //   this.http.get<any[]>(`${this.apiBase}/news/`).subscribe({
@@ -790,58 +948,88 @@ deleteAppointment(id: any) {
   //   }
   // }
   loadNews() {
-    this.news = JSON.parse(localStorage.getItem('newsArticles') || '[]');
-    this.cdr.detectChanges();
-}
+    const localNews = JSON.parse(localStorage.getItem('newsArticles') || '[]');
+    
+    this.http.get<any[]>(`${this.apiBase}/news/`).subscribe({
+      next: (dbNews: any[]) => {
+        let changed = false;
+        dbNews.forEach(dbItem => {
+          // Check if already imported (using title or id)
+          const exists = localNews.some((l: any) => 
+            (l.id && l.id === dbItem.id) || l.title === dbItem.title
+          );
+          if (!exists) {
+            localNews.push({
+              ...dbItem,
+              id: dbItem.id || Date.now() + Math.random(),
+              image: dbItem.image_url || dbItem.image || '',
+              images: dbItem.images || []
+            });
+            changed = true;
+          }
+        });
 
-openNewsModal(article?: any) {
+        if (changed) {
+          localStorage.setItem('newsArticles', JSON.stringify(localNews));
+        }
+        this.news = localNews;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.news = localNews;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  openNewsModal(article?: any) {
     if (article) {
-        this.currentNews = { ...article };
+      this.currentNews = { ...article };
     } else {
-        this.currentNews = {
-            id:       '',
-            title:    '',
-            category: '',
-            date:     new Date().toLocaleDateString(),
-            summary:  '',
-            content:  '',
-            image:    ''
-        };
+      this.currentNews = {
+        id: '',
+        title: '',
+        category: '',
+        date: new Date().toLocaleDateString(),
+        summary: '',
+        content: '',
+        image: ''
+      };
     }
     this.showNewsModal = true;
-}
+  }
 
-saveNews() {
+  saveNews() {
     const all: any[] = JSON.parse(localStorage.getItem('newsArticles') || '[]');
 
     if (this.currentNews.id) {
-        // Edit existing
-        const idx = all.findIndex((n: any) => n.id === this.currentNews.id);
-        if (idx > -1) {
-            all[idx] = { ...this.currentNews };
-        }
+      // Edit existing
+      const idx = all.findIndex((n: any) => n.id === this.currentNews.id);
+      if (idx > -1) {
+        all[idx] = { ...this.currentNews };
+      }
     } else {
-        // Add new
-        this.currentNews.id = Date.now();
-        all.unshift({ ...this.currentNews }); // unshift = newest first
+      // Add new
+      this.currentNews.id = Date.now();
+      all.unshift({ ...this.currentNews }); // unshift = newest first
     }
 
     localStorage.setItem('newsArticles', JSON.stringify(all));
     this.loadNews();
     this.showNewsModal = false;
     this.showToast(this.currentNews.id ? 'News updated!' : 'News added!', 'success');
-}
+  }
 
-deleteNews(id: any) {
+  deleteNews(id: any) {
     this.showConfirm('Delete this news article?').then(ok => {
-        if (!ok) return;
-        const all: any[] = JSON.parse(localStorage.getItem('newsArticles') || '[]');
-        const updated = all.filter((n: any) => n.id !== id);
-        localStorage.setItem('newsArticles', JSON.stringify(updated));
-        this.loadNews();
-        this.showToast('News deleted!', 'success');
+      if (!ok) return;
+      const all: any[] = JSON.parse(localStorage.getItem('newsArticles') || '[]');
+      const updated = all.filter((n: any) => n.id !== id);
+      localStorage.setItem('newsArticles', JSON.stringify(updated));
+      this.loadNews();
+      this.showToast('News deleted!', 'success');
     });
-}
+  }
 
   // deleteNews(id: number) {
   //   this.showConfirm('Delete this news article?').then(ok => {
@@ -861,38 +1049,57 @@ deleteNews(id: any) {
     });
   }
 
-  openEventModal(ev?: any) {
+  openEventModal(ev?: HospitalEvent) {
     if (ev) {
       this.currentEvent = { ...ev };
-      // Use absolute image_url so the preview <img> loads correctly across ports
       this.currentEvent.image = (ev as any).image_url || ev.image || '';
+      this.currentEvent.images = (ev as any).images || [];
+      // Parse date and time if available
+      if (ev.date && ev.date.includes('-')) {
+        this.currentEvent.evDate = ev.date;
+      }
+      if (ev.time) {
+        this.currentEvent.evTime = ev.time;
+      }
     } else {
       this.currentEvent = {
         title: '', tag: '', date: '',
-        time: '', location: '', summary: '', image: ''
+        time: '', location: '', summary: '', image: '',
+        images: [], evDate: new Date().toISOString().split('T')[0], evTime: '10:00'
       };
     }
     this.showEventModal = true;
   }
 
   saveEvent() {
+    // Combine date and time pickers
+    if (this.currentEvent.evDate) {
+      this.currentEvent.date = this.currentEvent.evDate;
+    }
+    if (this.currentEvent.evTime) {
+      this.currentEvent.time = this.currentEvent.evTime;
+    }
+
     const payload = {
-  ...this.currentEvent,
-  image: this.currentEvent.image
-};
+      ...this.currentEvent,
+      image: this.currentEvent.image,
+      images: this.currentEvent.images || []
+    };
     const editing = this.currentEvent.id != null && this.currentEvent.id !== '';
     const finish = () => {
       this.loadAdminEvents();
       this.showEventModal = false;
       this.showToast(editing ? 'Event updated!' : 'Event added!', 'success');
     };
-   if (editing) {
-  const id = Number(this.currentEvent.id);
-  this.eventsService.updateEvent(id, payload).subscribe({ next: finish });
-} else {
-  this.eventsService.createEvent(payload).subscribe({ next: finish });
-}
+    if (editing) {
+      const id = Number(this.currentEvent.id);
+      this.eventsService.updateEvent(id, payload).subscribe({ next: finish });
+    } else {
+      this.eventsService.createEvent(payload).subscribe({ next: finish });
+    }
   }
+
+
 
   deleteEvent(id: number) {
     this.showConfirm('Delete this event?').then(ok => {
@@ -907,7 +1114,7 @@ deleteNews(id: any) {
   }
 
   // ================= TOAST SYSTEM =================
-  showToast(msg: string, type: 'success'|'error'|'warning' = 'success') {
+  showToast(msg: string, type: 'success' | 'error' | 'warning' = 'success') {
     const id = ++this.toastCounter;
     const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : '!';
     this.toasts = [...this.toasts, { id, msg, type, icon }];

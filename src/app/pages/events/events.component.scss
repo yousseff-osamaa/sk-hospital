@@ -147,3 +147,32 @@
   box-shadow: 0 15px 25px rgba(0, 167, 111, 0.3);
 }
 
+.event-gallery-mini {
+  display: flex;
+  gap: 8px;
+  margin-top: 1.25rem;
+  overflow-x: auto;
+  padding-bottom: 5px;
+  scrollbar-width: thin;
+}
+
+.event-gallery-thumb {
+  width: 55px;
+  height: 55px;
+  object-fit: cover;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 2.5px solid transparent;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  
+  &:hover { 
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+  
+  &.active { 
+    border-color: #00a76f;
+    box-shadow: 0 4px 12px rgba(0, 167, 111, 0.25);
+  }
+}

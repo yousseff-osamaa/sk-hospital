@@ -12,7 +12,10 @@ export interface HospitalEvent {
   location?: string;
   summary: string;
   image: string;
+  images?: string[];
   tag?: string;
+  evDate?: string;
+  evTime?: string;
 }
 
 @Component({
@@ -25,6 +28,19 @@ export interface HospitalEvent {
 export class EventsComponent implements OnInit, AfterViewInit {
   events: HospitalEvent[] = [];
   displayCount = 2;
+  selectedEvent: HospitalEvent | null = null;
+
+  viewEvent(ev: HospitalEvent): void {
+    this.selectedEvent = ev;
+    this.cd.detectChanges();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  closeEvent(): void {
+    this.selectedEvent = null;
+    this.cd.detectChanges();
+    this.refreshLucide();
+  }
 
   constructor(
     private readonly eventsService: EventsService,

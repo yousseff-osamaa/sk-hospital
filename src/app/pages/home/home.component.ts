@@ -12,12 +12,13 @@ declare var lucide: any;
     styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
-    heroImages = [
+    private readonly DEFAULT_HERO_IMAGES = [
         '/hospital-building.jpg',
         '/slider 3.jpeg',
         '/slider 4.jpeg',
         '/slider 6.jpeg'
     ];
+    heroImages: string[] = [];
     currentHeroIndex = 0;
     heroInterval: any;
 
@@ -28,6 +29,21 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
 
     ngOnInit() {
         if (isPlatformBrowser(this.platformId)) {
+            const stored = localStorage.getItem('heroImages');
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        this.heroImages = parsed;
+                    } else {
+                        this.heroImages = [...this.DEFAULT_HERO_IMAGES];
+                    }
+                } catch {
+                    this.heroImages = [...this.DEFAULT_HERO_IMAGES];
+                }
+            } else {
+                this.heroImages = [...this.DEFAULT_HERO_IMAGES];
+            }
             this.startAutoPlay();
         }
     }

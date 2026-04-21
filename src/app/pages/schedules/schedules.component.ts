@@ -56,23 +56,22 @@ export class SchedulesComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   loadSlides(): void {
-    
-  try {
-    const stored = localStorage.getItem('scheduleSlides');
-
-    const storedSlides: ScheduleSlide[] =
-      stored && JSON.parse(stored).length > 0
-        ? JSON.parse(stored)
-        : [];
-
-    // ✅ Merge defaults + stored (admin-added)
-    this.slides = [...this.DEFAULT_SLIDES, ...storedSlides];
-
-  } catch {
-    // fallback safely
-    this.slides = [...this.DEFAULT_SLIDES];
+    if (isPlatformBrowser(this.platformId)) {
+      const stored = localStorage.getItem('scheduleSlides');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            this.slides = parsed;
+            return;
+          }
+        } catch (e) {
+          console.error('Error parsing scheduleSlides', e);
+        }
+      }
+      this.slides = [...this.DEFAULT_SLIDES];
+    }
   }
-}
 
   ngAfterViewInit(): void {
     if (typeof (window as any).lucide !== 'undefined') {

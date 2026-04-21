@@ -17,6 +17,9 @@ export interface Doctor {
     nextSlot?: string;
     queueLength?: number;
     clinic_number?: string;
+    next_date?: string;
+    next_time?: string;
+    images?: string[];
 }
 
 @Injectable({ providedIn: 'root' })

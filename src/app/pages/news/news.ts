@@ -52,6 +52,16 @@ import { environment } from '../../../environments/environment';
         <h1 class="detail-title">{{ selectedPost.title }}</h1>
         <img [src]="selectedPost.image" class="detail-img">
         
+        <!-- Multi-image Gallery in News Detail -->
+        <div class="gallery-grid" *ngIf="selectedPost.images && selectedPost.images.length > 1">
+            <div *ngFor="let img of selectedPost.images" 
+                 class="thumb-item" 
+                 [class.active]="selectedPost.image === img"
+                 (click)="selectedPost.image = img">
+                <img [src]="img">
+            </div>
+        </div>
+        
         <div class="detail-content">
             <p>{{ selectedPost.content || selectedPost.summary }}</p>
             <p *ngIf="!selectedPost.content">
@@ -115,6 +125,23 @@ import { environment } from '../../../environments/environment';
     .detail-date { color: #919eab; font-size: 1rem; margin-left: 1rem; }
     .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
     .section-padding { padding: 80px 0; }
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+    .thumb-item {
+        height: 80px;
+        border-radius: 12px;
+        overflow: hidden;
+        cursor: pointer;
+        border: 3px solid transparent;
+        transition: 0.2s;
+    }
+    .thumb-item:hover { transform: scale(1.05); }
+    .thumb-item.active { border-color: #00a76f; }
+    .thumb-item img { width: 100%; height: 100%; object-fit: cover; }
   `]
 })
 export class NewsComponent implements OnInit, OnDestroy {
@@ -149,7 +176,8 @@ ngOnInit() {
             // Transform API news to ensure image URLs are absolute if provided
             const transformedDbNews = dbNews.map((n: any) => ({
                 ...n,
-                image: n.image_url || n.image || ''
+                image: n.image_url || n.image || '',
+                images: n.images || []
             }));
 
             // Merge: DB news first, then localStorage-only news after

@@ -3,10 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-contact',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  template: `
+    selector: 'app-contact',
+    standalone: true,
+    imports: [CommonModule, FormsModule],
+    template: `
     <section class="premium-hero" style="background-image: url('/hospital-building.jpg')">
         <div class="hero-overlay"></div>
         <div class="container hero-content fade-in">
@@ -25,17 +25,20 @@ import { FormsModule } from '@angular/forms';
                 {{ successMsg }}
             </div>
 
-            <div class="form-group" style="margin-bottom: 1.2rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">First Name</label>
-                <input type="text" [(ngModel)]="contactName" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            <div style="display: flex; gap: 1rem; margin-bottom: 1.2rem;">
+                <div class="form-group" style="flex: 1;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">First Name</label>
+                    <input type="text" [(ngModel)]="firstName" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Last Name</label>
+                    <input type="text" [(ngModel)]="lastName" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                </div>
             </div>
-            <div class="form-group" style="margin-bottom: 1.2rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Last Name</label>
-                <input type="text" [(ngModel)]="contactName" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
-            </div>
+
             <div class="form-group" style="margin-bottom: 1.2rem;">
                 <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Email</label>
-                <input type="text" [(ngModel)]="contactName" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                <input type="email" [(ngModel)]="email" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
             </div>
             
             <div class="form-group" style="margin-bottom: 1.2rem;">
@@ -44,7 +47,7 @@ import { FormsModule } from '@angular/forms';
             </div>
             <div class="form-group" style="margin-bottom: 1.2rem;">
                 <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Title</label>
-                <input type="text" [(ngModel)]="contactName" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                <input type="text" [(ngModel)]="title" class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
             </div>
             <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Message</label>
@@ -55,16 +58,19 @@ import { FormsModule } from '@angular/forms';
         </div>
     </section>
   `,
-  styles: ``
+    styles: ``
 })
 export class Contact {
-    contactName = '';
+    firstName = '';
+    lastName = '';
+    email = '';
     contactPhone = '';
+    title = '';
     contactBody = '';
     successMsg = '';
 
     submitContact() {
-        if (!this.contactName || !this.contactPhone || !this.contactBody) {
+        if (!this.firstName || !this.lastName || !this.email || !this.contactPhone || !this.title || !this.contactBody) {
             alert('Please fill all fields');
             return;
         }
@@ -72,18 +78,24 @@ export class Contact {
         let msgs = JSON.parse(localStorage.getItem('contactMessages') || '[]');
         msgs.push({
             id: Date.now(),
-            name: this.contactName,
+            firstName: this.firstName,
+            lastName: this.lastName,
+            email: this.email,
             contact: this.contactPhone,
+            subject: this.title,
             body: this.contactBody,
             date: new Date().toLocaleString()
         });
         localStorage.setItem('contactMessages', JSON.stringify(msgs));
 
         this.successMsg = 'Message sent successfully! Our team will contact you soon.';
-        this.contactName = '';
+        this.firstName = '';
+        this.lastName = '';
+        this.email = '';
         this.contactPhone = '';
+        this.title = '';
         this.contactBody = '';
-        
+
         setTimeout(() => this.successMsg = '', 5000);
     }
 }

@@ -52,7 +52,8 @@ export class EventsService {
       map((events) => events.map(e => ({
         ...e,
         // prefer the absolute image_url returned by the backend
-        image: (e['image_url'] as string) || (e['image'] as string) || ''
+        image: (e['image_url'] as string) || (e['image'] as string) || '',
+        images: (e['images'] as string[]) || []
       }))),
       catchError(() => of(this.readLocal()))
     );

@@ -17,7 +17,7 @@ import { FormsModule } from '@angular/forms';
         </div>
     </section>
 
-    <section class="section-padding container">
+    <section id="contactForm" class="section-padding container">
         <div style="max-width: 600px; margin: 0 auto; padding: 2.5rem; border-radius: 16px; background: white; box-shadow: 0 8px 24px rgba(10, 79, 166, 0.12);">
             <h2 style="color: var(--primary-dark); margin-bottom: 2rem; text-align: center;">Send Us A Message</h2>
             

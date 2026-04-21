@@ -671,7 +671,7 @@
       </div>
       <div class="form-group">
         <label>Doctor Image</label>
-        <input type="file" accept="image/*" (change)="onImageSelected($event)" />
+        <input type="file" accept="image/*" (change)="onDoctorImageSelected($event)" />
         <img *ngIf="currentDoctor.image" [src]="currentDoctor.image" alt="preview"
           style="margin-top:0.5rem; max-height:80px; border-radius:8px; object-fit:cover; display:block; border:1px solid #eee;">
       </div>
@@ -812,7 +812,7 @@
       <!-- Image Upload -->
       <div class="form-group">
         <label>News Image</label>
-        <input type="file" accept="image/*" (change)="onImageSelected($event)" />
+        <input type="file" accept="image/*" (change)="onNewsImageSelected($event)" />
       </div>
 
       <!-- Actions -->

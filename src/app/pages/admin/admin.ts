@@ -174,23 +174,41 @@ saveHeroImage() {
   this.showHeroModal = false;
   this.cdr.detectChanges();
 } 
-onNewsImageSelected(event: any) {
-  const file = event.target.files?.[0];
-  if (!file) return;
+  onNewsImageSelected(event: any) {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-  if (!file.type.startsWith('image/')) {
-    this.showToast('Please select a valid image file', 'error');
-    return;
+    if (!file.type.startsWith('image/')) {
+      this.showToast('Please select a valid image file', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.currentNews.image = reader.result as string; // base64
+      this.cdr.detectChanges();
+    };
+    reader.onerror = () => this.showToast('Failed to load image', 'error');
+    reader.readAsDataURL(file);
   }
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    this.currentNews.image = reader.result as string; // base64
-    this.cdr.detectChanges();
-  };
-  reader.onerror = () => this.showToast('Failed to load image', 'error');
-  reader.readAsDataURL(file);
-}
+  onDoctorImageSelected(event: any) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.showToast('Please select a valid image file', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.currentDoctor.image = reader.result as string; // base64
+      this.cdr.detectChanges();
+    };
+    reader.onerror = () => this.showToast('Failed to load image', 'error');
+    reader.readAsDataURL(file);
+  }
 deleteHeroImage(index: number) {
   this.showConfirm('Delete this image?').then(ok => {
     if (!ok) return;

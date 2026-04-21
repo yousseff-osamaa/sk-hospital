@@ -95,6 +95,26 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isMenuOpen = false;
 }
 
+  /**
+   * Handle navbar clicks. If already on the same route (e.g. home) we
+   * prevent navigation and scroll past the hero to the main content.
+   * Also stop propagation so the slider/hero doesn't react to the click.
+   */
+  onNavClick(event: Event, path: string) {
+    // close mobile menu immediately
+    this.isMenuOpen = false;
+
+    // Normalize current url (strip query/fragment)
+    const current = this.router.url ? this.router.url.split('?')[0].split('#')[0] : '';
+
+    if (current === path) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.skipToMain();
+    }
+    // otherwise allow routerLink to navigate normally
+  }
+
 }
 
 

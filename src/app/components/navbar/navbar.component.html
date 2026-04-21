@@ -4,14 +4,14 @@
   <a href="https://www.linkedin.com/company/skuh/" target="_blank" class="side-icon linkedin"><img src="assets/linkedin.png" alt="LinkedIn"></a>
 </div>
 
-<nav class="navbar">
+<nav class="navbar" (click)="$event.stopPropagation()">
   <div class="nav-content">
 
-    <div class="logo" routerLink="/">
+    <div class="logo" routerLink="/" (click)="onNavClick($event, '/')">
       <img src="/assets/logo2.png" alt="SKUH" class="logo-img">
     </div>
 <ul class="nav-links" [class.open]="isMenuOpen">
-      <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="isMenuOpen=false">Home</a></li>
+      <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="onNavClick($event, '/')">Home</a></li>
       <li><a routerLink="/about" routerLinkActive="active" (click)="isMenuOpen=false">About Us</a></li>
       <li><a routerLink="/services" routerLinkActive="active" (click)="isMenuOpen=false">Services</a></li>
       <li><a routerLink="/doctors" routerLinkActive="active" (click)="isMenuOpen=false">Doctors</a></li>

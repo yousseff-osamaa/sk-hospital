@@ -9,7 +9,7 @@ import { environment } from '../../../environments/environment';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <section class="section-padding container">
+    <section id="hospitalNews" class="section-padding container">
       
       <div *ngIf="!selectedPost">
         <div class="news-grid">
@@ -146,13 +146,18 @@ ngOnInit() {
     // Then fetch from DB and merge (DB news + localStorage news combined)
     this.http.get<any[]>(`${environment.apiUrl}/news/`).subscribe({
         next: (dbNews) => {
+            // Transform API news to ensure image URLs are absolute if provided
+            const transformedDbNews = dbNews.map((n: any) => ({
+                ...n,
+                image: n.image_url || n.image || ''
+            }));
+
             // Merge: DB news first, then localStorage-only news after
-            // Avoid duplicates by filtering out localStorage items that have same title as DB
-            const dbTitles = new Set(dbNews.map((n: any) => n.title?.toLowerCase()));
+            const dbTitles = new Set(transformedDbNews.map((n: any) => n.title?.toLowerCase()));
             const localOnly = stored.filter((n: any) =>
                 !dbTitles.has(n.title?.toLowerCase())
             );
-            this.newsArticles = [...dbNews, ...localOnly];
+            this.newsArticles = [...transformedDbNews, ...localOnly];
             this.cd.detectChanges();
         },
         error: () => {
